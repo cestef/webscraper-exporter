@@ -3,3 +3,4 @@ wsce.config.js
 test.ts
 data/
 dist/
+.DS_Store
