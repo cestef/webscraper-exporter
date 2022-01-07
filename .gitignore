@@ -1,0 +1,5 @@
+node_modules/
+wsce.config.js
+test.ts
+data/
+dist/
