@@ -11,10 +11,8 @@ import { EventEmitter } from "events";
 import puppeteer from "puppeteer";
 import Logger from "../Logger";
 import { TestResult } from "./types";
-import { test, ScrapeResult } from "./utils/scraper";
-import level, { LevelDB } from "level";
+import { test } from "./utils/scraper";
 import { join } from "path";
-import { Histogram } from "prom-client";
 
 const defaultOptions: Partial<ScraperOptions> = {
     verbose: false,
@@ -32,12 +30,10 @@ class Scraper extends EventEmitter {
     interval: NodeJS.Timeout | null;
     results: TestResult[];
     logger: Logger;
-    db: LevelDB;
     constructor(options: ScraperOptions) {
         super();
         this.browser = null;
         this.options = { ...defaultOptions, ...options };
-        this.db = level(this.options.dbPath as string);
         this.interval = null;
         this.results = [];
         this.logger = new Logger(Boolean(this.options.verbose));
@@ -68,27 +64,11 @@ class Scraper extends EventEmitter {
                 })}, consider augmenting the interval.`
             );
         this.emit("testsFinish", tests);
-        await this._setJSON("results", (await this._getJSON("results", [])).concat(tests));
-    }
-    private async _getJSON<K = any>(key: string, defaultValue?: any): Promise<K> {
-        let value;
-        try {
-            value = await this.db.get(key);
-        } catch {
-            value = defaultValue || null;
-        }
-        return JSON.parse(value);
-    }
-    private async _setJSON(key: string, value: any): Promise<void> {
-        return await this.db.put(key, JSON.stringify(value));
     }
     async stop() {
         this.logger.debug("Stopping scraper...");
         await this.browser?.close();
         this.interval && clearInterval(this.interval);
-    }
-    async getTests(): Promise<TestResult[]> {
-        return await this._getJSON("results", []);
     }
 }
 

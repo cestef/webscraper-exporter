@@ -36,6 +36,7 @@ class Exporter {
         this.register = client.register;
         this.scraper = options.scraper;
         this.logger = new Logger(options.verbose);
+        this.options.port = this.options.port || 3000;
     }
     start() {
         this.server = createServer();
