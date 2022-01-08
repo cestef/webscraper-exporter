@@ -1,5 +1,5 @@
 import { createServer, Server, IncomingMessage, ServerResponse } from "http";
-import client, { Gauge, Registry } from "prom-client";
+import client, { Gauge } from "prom-client";
 import url from "url";
 import { Scraper } from "..";
 import { TestResult } from "../scraper/types";

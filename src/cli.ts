@@ -8,23 +8,19 @@ import { join } from "path";
 import beforeShutdown from "./shutdown";
 (async () => {
     const args = await yargs(hideBin(process.argv))
-        .option("port", {
-            alias: "p",
-            type: "number",
-            default: 3000,
-            description: "The port for the exporter",
-        })
+        .help()
+        .alias("h", "help")
         .option("config", {
             alias: "c",
             type: "string",
-            default: join(process.cwd(), "wsce.config.js"),
             description: "The config file path",
         })
+        .default("config", join(process.cwd(), "wsce.config.js"), "wsce.config.js")
         .option("verbose", {
             alias: "v",
             type: "boolean",
             default: false,
-            description: "Whether to print detailled logs or not",
+            description: "Print debug logs",
         })
         .parse();
     let config: { scraper: ScraperOptions; exporter: ExporterOptions };
@@ -37,7 +33,6 @@ import beforeShutdown from "./shutdown";
     const exporter = new Exporter({
         ...config.exporter,
         verbose: args.verbose,
-        port: args.port,
         scraper,
     });
     scraper.start();

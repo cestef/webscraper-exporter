@@ -1,7 +1,7 @@
-import { Browser, Page, BrowserContext } from "puppeteer";
+import { Browser, BrowserContext } from "puppeteer";
 import { Condition, ScraperOptions } from "..";
 import { CPUStats, getCPU } from "./cpuUsage";
-import { getCombinations, sleep } from "./functions";
+import { getCombinations } from "./functions";
 import { lhReport } from "./lighthouse";
 import { MemoryStats, getMemory } from "./memoryUage";
 
@@ -24,9 +24,7 @@ const scrapePage = async (
 
     const conditionsStart = Date.now();
     for await (let condition of conditions) {
-        // console.log(`Running condition: ${condition.name}`);
         await condition.run(context, page, url);
-        // console.log("Done.");
     }
     const conditionsEnd = Date.now();
 
