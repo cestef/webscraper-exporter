@@ -1,5 +1,5 @@
 import ms from "ms";
-import type {
+import {
     Browser,
     BrowserConnectOptions,
     BrowserContext,
@@ -7,12 +7,14 @@ import type {
     LaunchOptions,
     Page,
 } from "puppeteer";
+import { EventEmitter } from "events";
 import puppeteer from "puppeteer";
 import Logger from "../Logger";
 import { TestResult } from "./types";
-import { test } from "./utils/scraper";
+import { test, ScrapeResult } from "./utils/scraper";
 import level, { LevelDB } from "level";
 import { join } from "path";
+import { Histogram } from "prom-client";
 
 const defaultOptions: Partial<ScraperOptions> = {
     verbose: false,
@@ -20,8 +22,11 @@ const defaultOptions: Partial<ScraperOptions> = {
     interval: 60_000,
     dbPath: join(__dirname, "../..", "data"),
 };
-
-class Scraper {
+declare interface Scraper {
+    on(event: "testsFinish", listener: (tests: TestResult) => void): this;
+    on(event: string, listener: (...args: any[]) => void): this;
+}
+class Scraper extends EventEmitter {
     browser: Browser | null;
     options: ScraperOptions;
     interval: NodeJS.Timeout | null;
@@ -29,6 +34,7 @@ class Scraper {
     logger: Logger;
     db: LevelDB;
     constructor(options: ScraperOptions) {
+        super();
         this.browser = null;
         this.options = { ...defaultOptions, ...options };
         this.db = level(this.options.dbPath as string);
@@ -38,7 +44,7 @@ class Scraper {
     }
     async start() {
         await this.scrape();
-        this.interval = setInterval(() => this.scrape(), this.options.interval);
+        this.interval = setInterval(this.scrape.bind(this), this.options.interval);
     }
     async scrape() {
         if (!this.browser) this.browser = await puppeteer.launch(this.options.puppeteerOptions);
@@ -48,7 +54,6 @@ class Scraper {
             this.logger.debug(`Starting testing for ${URL}`);
             const { result, lhr } = await test(this.browser, this.options, URL);
             tests[URL] = { scrape: result, lhr };
-            this.logger.debug(`Finished testing for ${URL}`);
         }
         const testsEnd = Date.now();
         this.logger.info(
@@ -62,11 +67,28 @@ class Scraper {
                     long: true,
                 })}, consider augmenting the interval.`
             );
-        this.results.push(tests);
+        this.emit("testsFinish", tests);
+        await this._setJSON("results", (await this._getJSON("results", [])).concat(tests));
+    }
+    private async _getJSON<K = any>(key: string, defaultValue?: any): Promise<K> {
+        let value;
+        try {
+            value = await this.db.get(key);
+        } catch {
+            value = defaultValue || null;
+        }
+        return JSON.parse(value);
+    }
+    private async _setJSON(key: string, value: any): Promise<void> {
+        return await this.db.put(key, JSON.stringify(value));
     }
     async stop() {
+        this.logger.debug("Stopping scraper...");
         await this.browser?.close();
         this.interval && clearInterval(this.interval);
+    }
+    async getTests(): Promise<TestResult[]> {
+        return await this._getJSON("results", []);
     }
 }
 

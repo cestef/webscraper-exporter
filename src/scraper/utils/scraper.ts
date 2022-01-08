@@ -24,9 +24,9 @@ const scrapePage = async (
 
     const conditionsStart = Date.now();
     for await (let condition of conditions) {
-        console.log(`Running condition: ${condition.name}`);
+        // console.log(`Running condition: ${condition.name}`);
         await condition.run(context, page, url);
-        console.log("Done.");
+        // console.log("Done.");
     }
     const conditionsEnd = Date.now();
 

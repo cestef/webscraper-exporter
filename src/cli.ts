@@ -2,11 +2,18 @@
 
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
-import { ExporterOptions, Exporter } from "./exporter";
-import { ScraperOptions, Scraper } from "./scraper";
+import { ExporterOptions, Exporter } from ".";
+import { ScraperOptions, Scraper } from ".";
 import { join } from "path";
+import beforeShutdown from "./shutdown";
 (async () => {
     const args = await yargs(hideBin(process.argv))
+        .option("port", {
+            alias: "p",
+            type: "number",
+            default: 3000,
+            description: "The port for the exporter",
+        })
         .option("config", {
             alias: "c",
             type: "string",
@@ -27,6 +34,17 @@ import { join } from "path";
         throw new Error("Couldn't load the config: " + e);
     }
     const scraper = new Scraper({ ...config.scraper, verbose: args.verbose });
-    const exporter = new Exporter({ ...config.exporter, verbose: args.verbose });
-    await scraper.start();
+    const exporter = new Exporter({
+        ...config.exporter,
+        verbose: args.verbose,
+        port: args.port,
+        scraper,
+    });
+    scraper.start();
+    exporter.start();
+    beforeShutdown(async (code: any) => {
+        exporter.stop();
+        await scraper.stop();
+        process.exit(code);
+    });
 })();
