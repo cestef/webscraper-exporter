@@ -28,25 +28,21 @@ import Logger from "./Logger";
         .option("urls", {
             alias: "u",
             type: "string",
-            default: "",
             description: "Comma-separated URLs",
         })
         .option("port", {
             alias: "p",
             type: "number",
-            default: 3000,
             description: "Exporter port",
         })
         .option("interval", {
             alias: "i",
             type: "number",
-            default: 60_000,
             description: "Scraper interval",
         })
         .option("lighthouse", {
             alias: "l",
             type: "boolean",
-            default: false,
             description: "Run lighthouse tests",
         })
         .parse();
@@ -57,18 +53,20 @@ import Logger from "./Logger";
         logger.warn(`Couldn't load the config, falling back to default.`);
         config = await import(join(__dirname, "..", "default.wsce.config.js"));
     }
+    const urls = args.urls?.split(/,| ,/g).filter(Boolean);
     const scraper = new Scraper({
         ...config.scraper,
         verbose: args.verbose,
-        urls: args.urls.split(/,| ,/g).filter(Boolean),
-        interval: args.interval,
-        lighthouse: args.lighthouse,
+        ...(urls && urls?.length > 0 && { urls }),
+        ...(typeof args.interval !== "undefined" && { port: args.interval }),
+        ...(typeof args.lighthouse !== "undefined" && { port: args.lighthouse }),
     });
+    console.log(scraper.options);
     const exporter = new Exporter({
         ...config.exporter,
         verbose: args.verbose,
         scraper,
-        port: args.port,
+        ...(typeof args.port !== "undefined" && { port: args.port }),
     });
     scraper.start();
     exporter.start();

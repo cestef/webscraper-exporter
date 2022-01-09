@@ -12,13 +12,11 @@ import puppeteer from "puppeteer";
 import Logger from "../Logger";
 import { TestResult } from "./types";
 import { test } from "./utils/scraper";
-import { join } from "path";
 
 const defaultOptions: Partial<ScraperOptions> = {
     verbose: false,
     lighthouse: false,
     interval: 60_000,
-    dbPath: join(__dirname, "../..", "data"),
 };
 declare interface Scraper {
     on(event: "testsFinish", listener: (tests: TestResult) => void): this;
@@ -91,13 +89,15 @@ interface ScraperOptions {
      * @default false
      */
     verbose?: boolean;
-    /**
-     * Path to the LevelDB file
-     */
-    dbPath?: string;
 }
 interface Condition {
+    /**
+     * Unique name for this condition
+     */
     name: string;
+    /**
+     * Whether the test should be ran with and without this condition
+     */
     twice: boolean;
     run: (browser: BrowserContext, page: Page, URL: string) => Promise<any>;
 }
