@@ -29,5 +29,16 @@
         "chokidar": "^3.5.2",
         "nodemon": "^2.0.15",
         "ts-node": "^10.4.0"
+    },
+    "keywords": [
+        "prometheus",
+        "scraper",
+        "prometheus-exporter",
+        "puppeteer",
+        "metrics-exporter"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/cstefFlexin/webscraper-exporter.git"
     }
 }

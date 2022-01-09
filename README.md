@@ -1,6 +1,6 @@
 # Webscraper Exporter
 
-A simple [`prometheus`](https://prometheus.io) exporter for website performance metrics.
+A simple [`prometheus`](https://prometheus.io) exporter for website performance metrics using [`puppeteer`](https://pptr.dev/).
 
 ## CLI 
 
@@ -28,13 +28,13 @@ This should print the package's version
 
 #### Configuration
 
-In your current working directory, create a file named `wsce.config.js` with the following content:
+In your current working directory, create a file named `wsce.config.js` with the following example content:
 
 ```js
 module.exports = {
     scraper: {
         urls: ["https://google.com"],
-        puppeteerOptions: { headless: true },
+        puppeteerOptions: {},
         conditions: [],
         lighthouse: false,
         interval: 60_000,
@@ -44,6 +44,8 @@ module.exports = {
     },
 };
 ```
+
+For further information on the configuration, see [CONFIGURING.md](./docs/CONFIGURING.md)
 
 #### Using
 
@@ -72,3 +74,32 @@ or
 ```bash
 yarn add webscraper-exporter
 ```
+
+#### Using
+```js
+import { Exporter, Scraper } from "webscraper-exporter";
+
+const scraper = new Scraper({
+    urls: ["https://cstef.dev"],
+    conditions: [
+        {
+            name: "Logger",
+            twice: false,
+            run: (browser, page, URL) => {
+                console.log(`I am running on ${URL}`);
+            },
+        },
+    ],
+    lighthouse: false,
+    verbose: true,
+    interval: 60_000,
+});
+scraper.start();
+const exporter = new Exporter({ 
+    scraper, 
+    port: 3000, 
+    verbose: true 
+});
+exporter.start();
+```
+For more examples, see the [`examples`](./examples) folder.

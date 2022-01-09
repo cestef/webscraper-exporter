@@ -6,7 +6,10 @@ import { ExporterOptions, Exporter } from ".";
 import { ScraperOptions, Scraper } from ".";
 import { join } from "path";
 import beforeShutdown from "./shutdown";
+import Logger from "./Logger";
+
 (async () => {
+    const logger = new Logger(false);
     const args = await yargs(hideBin(process.argv))
         .help()
         .alias("h", "help")
@@ -22,18 +25,50 @@ import beforeShutdown from "./shutdown";
             default: false,
             description: "Print debug logs",
         })
+        .option("urls", {
+            alias: "u",
+            type: "string",
+            default: "",
+            description: "Comma-separated URLs",
+        })
+        .option("port", {
+            alias: "p",
+            type: "number",
+            default: 3000,
+            description: "Exporter port",
+        })
+        .option("interval", {
+            alias: "i",
+            type: "number",
+            default: 60_000,
+            description: "Scraper interval",
+        })
+        .option("lighthouse", {
+            alias: "l",
+            type: "boolean",
+            default: false,
+            description: "Run lighthouse tests",
+        })
         .parse();
     let config: { scraper: ScraperOptions; exporter: ExporterOptions };
     try {
         config = await import(args.config);
     } catch (e) {
-        throw new Error("Couldn't load the config: " + e);
+        logger.warn(`Couldn't load the config, falling back to default.`);
+        config = await import(join(__dirname, "..", "default.wsce.config.js"));
     }
-    const scraper = new Scraper({ ...config.scraper, verbose: args.verbose });
+    const scraper = new Scraper({
+        ...config.scraper,
+        verbose: args.verbose,
+        urls: args.urls.split(/,| ,/g).filter(Boolean),
+        interval: args.interval,
+        lighthouse: args.lighthouse,
+    });
     const exporter = new Exporter({
         ...config.exporter,
         verbose: args.verbose,
         scraper,
+        port: args.port,
     });
     scraper.start();
     exporter.start();
