@@ -61,7 +61,6 @@ import Logger from "./Logger";
         ...(typeof args.interval !== "undefined" && { port: args.interval }),
         ...(typeof args.lighthouse !== "undefined" && { port: args.lighthouse }),
     });
-    console.log(scraper.options);
     const exporter = new Exporter({
         ...config.exporter,
         verbose: args.verbose,
