@@ -51,13 +51,14 @@ exports.handler = async (args: any) => {
     const logger = new Logger(true, args.v);
     let config: { scraper: ScraperOptions; exporter: ExporterOptions };
     try {
-        config = await import(args.config);
+        const imported = await import(args.config);
+        config = imported?.default || imported;
     } catch (e) {
         logger.warn(`Couldn't load the config, falling back to default.`);
         const defaultConfig = await import(join(__dirname, "../../..", "default.wsce.config.js"));
         config = defaultConfig?.default || defaultConfig;
-        if (!config) return logger.error("Couldn't even load the default config...");
     }
+    if (!config) return logger.error("Couldn't load the config...");
     const urls = args.urls?.split(/,| ,/g).filter(Boolean);
     const scraper = new Scraper({
         ...config.scraper,
