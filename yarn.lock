@@ -1751,6 +1751,11 @@ typedarray-to-buffer@^3.1.5:
   dependencies:
     is-typedarray "^1.0.0"
 
+typescript@^4.6.0-dev.20220111:
+  version "4.6.0-dev.20220111"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.6.0-dev.20220111.tgz#6ebe323b067fdd7ec02e7cc2863009ea181fd184"
+  integrity sha512-Xevo7lNQivH7sLYoBmDiubjROWvTrVmcyP2h3iO/WZAmFf3vum9KSldMAphZys6Jkq3WbCwBCJvvNx2Pdix8cQ==
+
 unbzip2-stream@1.4.3:
   version "1.4.3"
   resolved "https://registry.npmjs.org/unbzip2-stream/-/unbzip2-stream-1.4.3.tgz"
