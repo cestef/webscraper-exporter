@@ -3,8 +3,9 @@
         "files": true
     },
     "compilerOptions": {
+        "resolveJsonModule": true,
         "target": "ES2020",
-        "module": "commonjs",
+        "module": "NodeNext",
         "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true,
         "strict": true,
@@ -13,5 +14,6 @@
         "rootDir": "./src",
         "declaration": true
     },
-    "exclude": ["test.ts"]
+    "exclude": ["test.ts"],
+    "include": ["src"]
 }

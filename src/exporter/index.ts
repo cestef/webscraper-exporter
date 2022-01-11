@@ -35,7 +35,7 @@ class Exporter {
         this.server = null;
         this.register = client.register;
         this.scraper = options.scraper;
-        this.logger = new Logger(options.verbose);
+        this.logger = new Logger(true, options.verbose || 3);
         this.options.port = this.options.port || 3000;
     }
     start() {
@@ -89,7 +89,7 @@ class Exporter {
 export { Exporter };
 
 export interface ExporterOptions {
-    verbose: boolean;
+    verbose?: number;
     port: number;
     scraper: Scraper;
 }

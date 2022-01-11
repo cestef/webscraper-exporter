@@ -1,18 +1,19 @@
-#!/usr/bin/env node
-
-import yargs from "yargs";
-import { hideBin } from "yargs/helpers";
-import { ExporterOptions, Exporter } from ".";
-import { ScraperOptions, Scraper } from ".";
+import Yargs, { Argv } from "yargs";
 import { join } from "path";
-import beforeShutdown from "./shutdown";
-import Logger from "./Logger";
+import { ScraperOptions, ExporterOptions, Scraper, Exporter } from "../..";
+import beforeShutdown from "../../shutdown";
+import Logger from "../../Logger";
+exports.command = "start [path]";
 
-(async () => {
-    const logger = new Logger(false);
-    const args = await yargs(hideBin(process.argv))
-        .help()
-        .alias("h", "help")
+exports.describe = "Start the exporter";
+
+exports.builder = (yargs: typeof Yargs) =>
+    yargs
+        .positional("path", {
+            describe: "Path to the project to start",
+            type: "string",
+            default: ".",
+        })
         .option("config", {
             alias: "c",
             type: "string",
@@ -22,8 +23,8 @@ import Logger from "./Logger";
         .option("verbose", {
             alias: "v",
             type: "boolean",
-            default: false,
             description: "Print debug logs",
+            count: true,
         })
         .option("urls", {
             alias: "u",
@@ -44,14 +45,18 @@ import Logger from "./Logger";
             alias: "l",
             type: "boolean",
             description: "Run lighthouse tests",
-        })
-        .parse();
+        });
+
+exports.handler = async (args: any) => {
+    const logger = new Logger(true, args.v);
     let config: { scraper: ScraperOptions; exporter: ExporterOptions };
     try {
         config = await import(args.config);
     } catch (e) {
         logger.warn(`Couldn't load the config, falling back to default.`);
-        config = await import(join(__dirname, "..", "default.wsce.config.js"));
+        const defaultConfig = await import(join(__dirname, "../../..", "default.wsce.config.js"));
+        config = defaultConfig?.default || defaultConfig;
+        if (!config) return logger.error("Couldn't even load the default config...");
     }
     const urls = args.urls?.split(/,| ,/g).filter(Boolean);
     const scraper = new Scraper({
@@ -74,4 +79,4 @@ import Logger from "./Logger";
         await scraper.stop();
         process.exit(code);
     });
-})();
+};

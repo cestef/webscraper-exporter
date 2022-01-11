@@ -1,24 +1,27 @@
-import { gray, bold, Color, blueBright, whiteBright, yellow, redBright } from "colorette";
+import { gray, bold, blueBright, whiteBright, yellow, redBright, greenBright } from "colorette";
 export default class Logger {
-    constructor(private verbose: boolean) {}
-    log(level: string, color: Color, ...args: any[]) {
+    constructor(private printTime: boolean, private verbose: number) {}
+    log(level: string, color: any, ...args: any[]) {
         console.log(
-            `${whiteBright(new Date().toLocaleTimeString())} ${bold(
+            `${this.printTime ? whiteBright(new Date().toLocaleTimeString()) + " " : ""}${bold(
                 color(`[${level.toUpperCase()}]`)
             )}`,
             ...args
         );
     }
     debug(...args: any[]) {
-        if (this.verbose) this.log("debug", gray, ...args);
+        if (this.verbose >= 3) this.log("debug", gray, ...args);
     }
     info(...args: any[]) {
-        this.log("info", blueBright, ...args);
+        if (this.verbose >= 2) this.log("info", blueBright, ...args);
     }
     warn(...args: any[]) {
-        this.log("warn", yellow, ...args);
+        if (this.verbose >= 1) this.log("warn", yellow, ...args);
+    }
+    success(...args: any[]) {
+        if (this.verbose >= 0) this.log("success", greenBright, ...args);
     }
     error(...args: any[]) {
-        this.log("error", redBright, ...args);
+        if (this.verbose >= 0) this.log("error", redBright, ...args);
     }
 }

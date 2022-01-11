@@ -14,7 +14,7 @@ import { TestResult } from "./types";
 import { test } from "./utils/scraper";
 
 const defaultOptions: Partial<ScraperOptions> = {
-    verbose: false,
+    verbose: 3,
     lighthouse: false,
     interval: 60_000,
 };
@@ -34,7 +34,7 @@ class Scraper extends EventEmitter {
         this.options = { ...defaultOptions, ...options };
         this.interval = null;
         this.results = [];
-        this.logger = new Logger(Boolean(this.options.verbose));
+        this.logger = new Logger(true, this.options.verbose as number);
     }
     async start() {
         await this.scrape();
@@ -86,9 +86,9 @@ interface ScraperOptions {
     interval?: number;
     /**
      * Whether to print detailled information or not
-     * @default false
+     * @default 3
      */
-    verbose?: boolean;
+    verbose?: number;
 }
 interface Condition {
     /**
