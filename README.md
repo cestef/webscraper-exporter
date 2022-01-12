@@ -4,6 +4,8 @@ A simple [`prometheus`](https://prometheus.io) exporter for website performance 
 
 ## CLI 
 
+Currently only supports `macOS` and `Linux`
+
 ### Getting started
 
 #### Installation
