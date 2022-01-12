@@ -1,32 +1,32 @@
 import { Browser, BrowserContext } from "puppeteer";
-import { Condition, ScraperOptions } from "../index.js";
+import { Addon, ScraperOptions } from "../index.js";
 import { CPUStats, getCPU } from "./cpuUsage.js";
 import { getCombinations } from "./functions.js";
 import { lhReport } from "./lighthouse.js";
 import { MemoryStats, getMemory } from "./memoryUage.js";
+import Logger from "../../Logger.js";
+import ms from "ms";
 
 export interface ScrapeResult {
     cpuMetrics: CPUStats;
     memoryMetrics: MemoryStats;
     duration: number;
     bytesIn: number;
-    conditionsDuration: number;
 }
 const scrapePage = async (
     context: BrowserContext,
     url: string,
-    conditions: Condition[]
+    addons: Addon[],
+    logger: Logger
 ): Promise<ScrapeResult> => {
     const page = await context.newPage();
 
     await page.setCacheEnabled(false);
     page.setDefaultNavigationTimeout(60000);
+    const before = addons.filter((e) => e.when === "before" || !e.when);
+    logger.debug(`Running addons that need to be ran before the test... (${before.length})`);
 
-    const conditionsStart = Date.now();
-    for await (let condition of conditions) {
-        await condition.run(context, page, url);
-    }
-    const conditionsEnd = Date.now();
+    for await (let addon of before) await addon.run(context, page, url);
 
     const start = Date.now();
     const cpuMeter = await getCPU(page.client(), 100);
@@ -47,6 +47,11 @@ const scrapePage = async (
     const memoryMetrics = await getMemory(page);
 
     const end = Date.now();
+    logger.debug(`Finished performance test for ${url}`);
+    const after = addons.filter((e) => e.when === "after");
+    logger.debug(`Running addons that need to be ran after the test... (${after.length})`);
+    for await (let addon of after) await addon.run(context, page, url);
+
     await page.close();
 
     return {
@@ -54,53 +59,57 @@ const scrapePage = async (
         memoryMetrics,
         duration: end - start,
         bytesIn,
-        conditionsDuration: conditionsEnd - conditionsStart,
     };
 };
 export const test = async (
     browser: Browser,
     config: ScraperOptions,
-    URL: string
-): Promise<{ result: { scrape: ScrapeResult; conditions: Condition[] }[]; lhr: any | null }> => {
+    URL: string,
+    logger: Logger
+): Promise<{ result: { scrape: ScrapeResult; addons: Addon[] }[]; lhr: any | null }> => {
     let res: {
         scrape: ScrapeResult;
-        conditions: Condition[];
+        addons: Addon[];
     }[] = [];
-    let conditions: { condition: Condition; status: boolean }[] = [];
+    let addons: { addon: Addon; status: boolean }[] = [];
 
-    for (let condition of config.conditions) {
-        if (condition.twice)
-            conditions = conditions.concat(
+    for (let addon of config.addons) {
+        if (addon.twice)
+            addons = addons.concat(
                 ...[
-                    { condition, status: true },
-                    { condition, status: false },
+                    { addon, status: true },
+                    { addon, status: false },
                 ]
             );
-        else conditions.push({ condition, status: true });
+        else addons.push({ addon, status: true });
     }
 
-    const combinations = getCombinations(conditions).filter((e) => {
-        const mapped = e.map((e) => e.condition);
+    const combinations = getCombinations(addons).filter((e) => {
+        const mapped = e.map((e) => e.addon);
         return (
             new Set(mapped).size === mapped.length &&
-            mapped.length > Object.keys(config.conditions).length - 1
+            mapped.length > Object.keys(config.addons).length - 1
         );
     });
     if (combinations.length === 0) {
         const context = await browser.createIncognitoBrowserContext();
-        res.push({ scrape: await scrapePage(context, URL, []), conditions: [] });
+        res.push({ scrape: await scrapePage(context, URL, [], logger), addons: [] });
     }
     for await (let currentTests of combinations) {
         const context = await browser.createIncognitoBrowserContext();
-        const conditionsToUse = currentTests.filter((e) => e.status).map((e) => e.condition);
+        const addonsToUse = currentTests.filter((e) => e.status).map((e) => e.addon);
         res.push({
-            scrape: await scrapePage(context, URL, conditionsToUse),
-            conditions: conditionsToUse,
+            scrape: await scrapePage(context, URL, addonsToUse, logger),
+            addons: addonsToUse,
         });
     }
     let lhr;
     if (config.lighthouse) {
+        logger.debug("Running LightHouse...");
+        const lhStart = Date.now();
         lhr = await lhReport(browser, URL);
+        const lhEnd = Date.now();
+        logger.debug(`Ran LightHouse in ${ms(lhEnd - lhStart, { long: true })}`);
     }
     return { result: res, lhr };
 };

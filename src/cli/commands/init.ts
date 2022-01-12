@@ -136,8 +136,7 @@ export const handler = async (args: any) => {
     spinner.text = "Copying files...";
     mkdirSync(projectPath);
     createDirectoryContents(templatePath, name, ["wsce.properties.json"]);
-    spinner.text = "Installing dependencies";
-    await installDir(name);
+    installDir(name);
     spinner.stop();
     logger.success(`Finished creating your project !
     - Use ${whiteBright(bold(`cd ${name}`))} to start hacking !
@@ -166,11 +165,6 @@ const createDirectoryContents = (
     });
 };
 const installDir = async (dir: string) => {
-    let hasYarn: boolean = false;
-    try {
-        await exec("yarn --version");
-        hasYarn = true;
-    } catch {}
     const packageJSONPath = join(process.cwd(), dir, "package.json");
     if (!existsSync(packageJSONPath))
         writeFileSync(
@@ -184,7 +178,6 @@ const installDir = async (dir: string) => {
                 ),
             "utf8"
         );
-    return await exec(`cd ${dir} && ${hasYarn ? "yarn" : "npm install"}`);
 };
 
 const getGithubURL = (input: string) => {

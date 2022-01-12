@@ -2,7 +2,7 @@ export default {
     scraper: {
         urls: [],
         puppeteerOptions: {},
-        conditions: [],
+        addons: [],
         lighthouse: false,
         interval: 60_000,
         verbose: 0,

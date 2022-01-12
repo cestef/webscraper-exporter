@@ -1,10 +1,10 @@
-import conditions from "./conditions/index.js";
+import addons from "./addons/index.js";
 
 export default {
     scraper: {
         urls: [],
         puppeteerOptions: {},
-        conditions,
+        addons,
         lighthouse: false,
         interval: 60_000,
         verbose: 0,

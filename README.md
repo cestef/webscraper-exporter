@@ -37,7 +37,7 @@ module.exports = {
     scraper: {
         urls: ["https://google.com"],
         puppeteerOptions: {},
-        conditions: [],
+        addons: [],
         lighthouse: false,
         interval: 60_000,
     },
@@ -63,6 +63,8 @@ If you want more detailled logs, you can pass the `-v` argument.
 
 To pass a custom config file, use `-c path/to/file`
 
+To see all available options for a command, see `wsce <command> -h`;
+
 ### NodeJS module
 
 #### Installing
@@ -83,24 +85,24 @@ import { Exporter, Scraper } from "webscraper-exporter";
 
 const scraper = new Scraper({
     urls: ["https://cstef.dev"],
-    conditions: [
+    addons: [
         {
             name: "Logger",
-            twice: false,
+            when: "before"
             run: (browser, page, URL) => {
                 console.log(`I am running on ${URL}`);
             },
         },
     ],
     lighthouse: false,
-    verbose: true,
+    verbose: 3,
     interval: 60_000,
 });
 scraper.start();
 const exporter = new Exporter({ 
     scraper, 
     port: 3000, 
-    verbose: true 
+    verbose: 3 
 });
 exporter.start();
 ```

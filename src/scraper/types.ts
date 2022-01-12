@@ -1,13 +1,13 @@
-import { Condition } from ".";
+import { Addon } from ".";
 import type { ScrapeResult } from "./utils/scraper";
 
 export interface TestResult {
     [url: string]: {
         scrape: {
             scrape: ScrapeResult;
-            conditions: Condition[];
+            addons: Addon[];
         }[];
-        lhr: {
+        lhr?: {
             [key: string]: any;
             categories: {
                 [category: string]: {

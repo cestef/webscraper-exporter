@@ -34,7 +34,7 @@ class Scraper extends EventEmitter {
         this.options = { ...defaultOptions, ...options };
         this.interval = null;
         this.results = [];
-        this.logger = new Logger(true, this.options.verbose || 3);
+        this.logger = new Logger(true, this.options.verbose as number);
     }
     async start() {
         await this.scrape();
@@ -47,7 +47,7 @@ class Scraper extends EventEmitter {
         for await (let URL of this.options.urls) {
             this.logger.debug(`Starting testing for ${URL}`);
             try {
-                const { result, lhr } = await test(this.browser, this.options, URL);
+                const { result, lhr } = await test(this.browser, this.options, URL, this.logger);
                 tests[URL] = { scrape: result, lhr };
             } catch (e) {
                 this.logger.error(`Test run failed for ${URL}, check debug for error`);
@@ -81,7 +81,7 @@ class Scraper extends EventEmitter {
 interface ScraperOptions {
     urls: string[];
     puppeteerOptions?: LaunchOptions & BrowserLaunchArgumentOptions & BrowserConnectOptions;
-    conditions: Condition[];
+    addons: Addon[];
     /**
      * Whether to generate a lighthouse report or not
      * @default false
@@ -98,16 +98,23 @@ interface ScraperOptions {
      */
     verbose?: number;
 }
-interface Condition {
+interface Addon {
     /**
-     * Unique name for this condition
+     * Unique name for this addon
      */
     name: string;
     /**
-     * Whether the test should be ran with and without this condition
+     * Whether the test should be ran with and without this addon
+     * @default false
      */
-    twice: boolean;
+    twice?: boolean;
+    /**
+     * When to run the addon
+     * @default "before"
+     */
+    when?: "before" | "after";
+
     run: (browser: BrowserContext, page: Page, URL: string) => Promise<any>;
 }
 
-export { Scraper, ScraperOptions, Condition };
+export { Scraper, ScraperOptions, Addon };

@@ -8,22 +8,47 @@ import Logger from "../Logger.js";
 const bytesIn = new Gauge({
     name: "bytes_in",
     help: "Bytes In",
-    labelNames: ["url", "conditions"],
+    labelNames: ["url", "addons"],
 });
 const cpuUsage = new Gauge({
     name: "cpu_usage",
     help: "CPU Usage (%)",
-    labelNames: ["url", "conditions"],
+    labelNames: ["url", "addons"],
 });
 const heapUsage = new Gauge({
     name: "heap_usage",
     help: "Heap Usage (bytes)",
-    labelNames: ["url", "conditions"],
+    labelNames: ["url", "addons"],
 });
 const duration = new Gauge({
     name: "duration",
-    help: "Test Duration (ms)",
-    labelNames: ["url", "conditions"],
+    help: "Duration of the Test (ms)",
+    labelNames: ["url", "addons"],
+});
+const lhrPerf = new Gauge({
+    name: "lhr_performance_score",
+    help: "LighHouse Performance Score",
+    labelNames: ["url"],
+});
+const lhrAccess = new Gauge({
+    name: "lhr_accessibility_score",
+    help: "LighHouse Accessibility Score",
+    labelNames: ["url"],
+});
+const lhrBP = new Gauge({
+    name: "lhr_best_practices_score",
+    help: "LighHouse Best Practices Score",
+    labelNames: ["url"],
+});
+const lhrSEO = new Gauge({
+    name: "lhr_seo_score",
+    help: "LighHouse SEO Score",
+    labelNames: ["url"],
+});
+const lhrPWA = new Gauge({
+    name: "lhr_pwa_score",
+    help: "LighHouse PWA Score",
+    labelNames: ["url"],
 });
 
 class Exporter {
@@ -35,7 +60,7 @@ class Exporter {
         this.server = null;
         this.register = client.register;
         this.scraper = options.scraper;
-        this.logger = new Logger(true, options.verbose || 3);
+        this.logger = new Logger(true, options.verbose as number);
         this.options.port = this.options.port || 3000;
     }
     start() {
@@ -52,21 +77,28 @@ class Exporter {
     private async _handleTestsFinish(test: TestResult) {
         for (let URL in test) {
             let t = test[URL];
-            for (let { scrape, conditions } of t.scrape) {
+            if (t.lhr) {
+                lhrPerf.set({ url: URL }, t.lhr.categories.performance.score);
+                lhrAccess.set({ url: URL }, t.lhr.categories.accessibility.score);
+                lhrBP.set({ url: URL }, t.lhr.categories["best-practices"].score);
+                lhrSEO.set({ url: URL }, t.lhr.categories.seo.score);
+                lhrPWA.set({ url: URL }, t.lhr.categories.pwa.score);
+            }
+            for (let { scrape, addons } of t.scrape) {
                 bytesIn.set(
-                    { url: URL, conditions: conditions.map((e) => e.name).join(",") },
+                    { url: URL, addons: addons.map((e) => e.name).join(",") },
                     scrape.bytesIn
                 );
                 cpuUsage.set(
-                    { url: URL, conditions: conditions.map((e) => e.name).join(",") },
+                    { url: URL, addons: addons.map((e) => e.name).join(",") },
                     scrape.cpuMetrics.average
                 );
                 heapUsage.set(
-                    { url: URL, conditions: conditions.map((e) => e.name).join(",") },
+                    { url: URL, addons: addons.map((e) => e.name).join(",") },
                     scrape.memoryMetrics.JSHeapUsedSize
                 );
                 duration.set(
-                    { url: URL, conditions: conditions.map((e) => e.name).join(",") },
+                    { url: URL, addons: addons.map((e) => e.name).join(",") },
                     scrape.duration
                 );
             }
