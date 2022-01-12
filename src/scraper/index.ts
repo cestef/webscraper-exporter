@@ -9,9 +9,9 @@ import {
 } from "puppeteer";
 import { EventEmitter } from "events";
 import puppeteer from "puppeteer";
-import Logger from "../Logger";
-import { TestResult } from "./types";
-import { test } from "./utils/scraper";
+import Logger from "../Logger.js";
+import { TestResult } from "./types.js";
+import { test } from "./utils/scraper.js";
 
 const defaultOptions: Partial<ScraperOptions> = {
     verbose: 3,
@@ -34,7 +34,7 @@ class Scraper extends EventEmitter {
         this.options = { ...defaultOptions, ...options };
         this.interval = null;
         this.results = [];
-        this.logger = new Logger(true, this.options.verbose as number);
+        this.logger = new Logger(true, this.options.verbose || 3);
     }
     async start() {
         await this.scrape();
@@ -46,14 +46,22 @@ class Scraper extends EventEmitter {
         const testsStart = Date.now();
         for await (let URL of this.options.urls) {
             this.logger.debug(`Starting testing for ${URL}`);
-            const { result, lhr } = await test(this.browser, this.options, URL);
-            tests[URL] = { scrape: result, lhr };
+            try {
+                const { result, lhr } = await test(this.browser, this.options, URL);
+                tests[URL] = { scrape: result, lhr };
+            } catch (e) {
+                this.logger.error(`Test run failed for ${URL}, check debug for error`);
+                this.logger.debug(e);
+            }
         }
         const testsEnd = Date.now();
         this.logger.info(
-            `Finished testing for each URL, next tests in ${ms(this.options.interval as number, {
-                long: true,
-            })} (${new Date(Date.now() + (this.options.interval as number)).toLocaleTimeString()})`
+            `Finished testing for each URL after ${ms(testsEnd - testsStart)}, next tests in ${ms(
+                this.options.interval as number,
+                {
+                    long: true,
+                }
+            )} (${new Date(Date.now() + (this.options.interval as number)).toLocaleTimeString()})`
         );
         if (testsEnd - testsStart > (this.options.interval as number) && this.results.length === 0)
             this.logger.warn(

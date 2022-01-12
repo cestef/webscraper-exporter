@@ -1,8 +1,10 @@
+import conditions from "./conditions/index.js";
+
 export default {
     scraper: {
         urls: [],
         puppeteerOptions: {},
-        conditions: [],
+        conditions,
         lighthouse: false,
         interval: 60_000,
         verbose: 0,

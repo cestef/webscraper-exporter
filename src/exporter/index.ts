@@ -1,9 +1,9 @@
 import { createServer, Server, IncomingMessage, ServerResponse } from "http";
 import client, { Gauge } from "prom-client";
 import url from "url";
-import { Scraper } from "..";
-import { TestResult } from "../scraper/types";
-import Logger from "../Logger";
+import { Scraper } from "../index.js";
+import { TestResult } from "../scraper/types.js";
+import Logger from "../Logger.js";
 
 const bytesIn = new Gauge({
     name: "bytes_in",

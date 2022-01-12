@@ -1,9 +1,9 @@
 import Yargs from "yargs";
 import { readdirSync, statSync, readFileSync, writeFileSync, mkdirSync, existsSync } from "fs";
 import { join } from "path";
-import { prompt, QuestionCollection, registerPrompt, Separator } from "inquirer";
-import Logger from "../../Logger";
-import Spin from "light-spinner";
+import inquirer from "inquirer";
+const { prompt, registerPrompt } = inquirer;
+import Logger from "../../Logger.js";
 import autocomplete from "inquirer-autocomplete-prompt";
 import fuzzy from "fuzzy";
 import axios from "axios";
@@ -13,20 +13,33 @@ import { bold, whiteBright } from "colorette";
 import { exec as e } from "child_process";
 import { promisify } from "util";
 const exec = promisify(e);
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+import LightSpinner from "light-spinner";
 
-const TEMPLATES = readdirSync(join(__dirname, "../../../templates")).map((e) =>
-    e
-        .split(" ")
-        .map((w) => w[0].toUpperCase() + w.substr(1).toLowerCase())
-        .join(" ")
-);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const GITHUB_REGEXP =
+    /^(?:(?:https:\/\/github.com\/([a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}\/[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38})(?:\.git)?)|([a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}\/[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}))$/i;
+
+const TEMPLATES = readdirSync(join(__dirname, "../../../templates")).map((e) => {
+    const templatePath = join(__dirname, "../../../templates", e);
+    if (existsSync(join(templatePath, "wsce.properties.json")))
+        return JSON.parse(readFileSync(join(templatePath, "wsce.properties.json"), "utf8"))?.name;
+    else
+        return e
+            .split(" ")
+            .map((w) => w[0].toUpperCase() + w.substring(1).toLowerCase())
+            .join(" ");
+});
 registerPrompt("autocomplete", autocomplete);
 
-exports.command = "init [name]";
+export const command = "init [name]";
 
-exports.describe = "Init a new wsce project";
+export const describe = "Init a new wsce project";
 
-exports.builder = (yargs: typeof Yargs) =>
+export const builder = (yargs: typeof Yargs) =>
     yargs
         .positional("name", { describe: "Name for your project", type: "string" })
         .option("template", { describe: "The template to use for this project", type: "string" })
@@ -36,7 +49,7 @@ exports.builder = (yargs: typeof Yargs) =>
             count: true,
         });
 
-exports.handler = async (args: any) => {
+export const handler = async (args: any) => {
     const logger = new Logger(false, args.v);
     if (args.name && !/^([A-Za-z\-\_\d])+$/.test(args.name))
         return logger.error(
@@ -44,14 +57,15 @@ exports.handler = async (args: any) => {
         );
     if (args.template && !existsSync(join(__dirname, "../../../templates", args.template)))
         return logger.error(`The "${args.template}" does not exist !`);
-    const QUESTIONS: QuestionCollection = [
+    const QUESTIONS = [
         {
             name: "template",
             type: "autocomplete",
             message: "What project template would you like to generate?",
             source: async (_: any, input: string) => {
                 input = input || "";
-                if (/.+\/.+/.test(input)) return [input];
+                const githubMatches = input.match(GITHUB_REGEXP);
+                if (githubMatches) return [githubMatches[1]];
                 return fuzzy.filter(input, TEMPLATES).map((e) => e.original);
             },
             suggestOnly: true,
@@ -59,20 +73,21 @@ exports.handler = async (args: any) => {
             validate: async (input: string) => {
                 input = input || "";
                 if (TEMPLATES.some((e) => e.toLowerCase() === input.toLowerCase())) return true;
-                if (/.+\/.+/.test(input)) {
+                const githubUrl = getGithubURL(input);
+                if (githubUrl) {
                     try {
                         const { data: commits } = await axios.get(
-                            `https://api.github.com/repos/${input}/commits`
+                            `https://api.github.com/repos/${githubUrl.parsed}/commits`
                         );
                         const sha = commits[0].commit.tree.sha;
                         const {
                             data: { tree },
                         } = await axios.get(
-                            `https://api.github.com/repos/${input}/git/trees/${sha}`
+                            `https://api.github.com/repos/${githubUrl.parsed}/git/trees/${sha}`
                         );
                         return (
-                            tree.some((e: any) =>
-                                ["wsce.config.js", "wsce.config.ts"].includes(e.path)
+                            tree.some((e: string) =>
+                                ["wsce.config.js", "wsce.properties.json"].every((f) => e === f)
                             ) || "The repo isn't a template"
                         );
                     } catch (e) {
@@ -97,15 +112,15 @@ exports.handler = async (args: any) => {
     const template = answers.template || args.template;
     const templatePath = join(__dirname, "../../../templates", template.replace("/", "-"));
     const name = answers.name || args.name;
-
-    const spinner = new Spin({ text: "Initializing the proejct..." });
+    const spinner = new (LightSpinner as any).default({ text: "Initializing the project..." });
     spinner.start();
 
     const projectPath = join(process.cwd(), name);
-    if (/.+\/.+/.test(template) && !existsSync(templatePath)) {
+    const githubURL = getGithubURL(template);
+    if (githubURL && !existsSync(templatePath)) {
         spinner.text = "Cloning the repository...";
         try {
-            await git.clone(`https://github.com/${template}.git`, templatePath);
+            await git.clone(githubURL.url, templatePath);
         } catch (e) {
             spinner.stop();
             return logger.error("Couldn't clone the repository: " + e);
@@ -120,19 +135,21 @@ exports.handler = async (args: any) => {
 
     spinner.text = "Copying files...";
     mkdirSync(projectPath);
-    createDirectoryContents(templatePath, name);
+    createDirectoryContents(templatePath, name, ["wsce.properties.json"]);
     spinner.text = "Installing dependencies";
     await installDir(name);
     spinner.stop();
     logger.success(`Finished creating your project !
     - Use ${whiteBright(bold(`cd ${name}`))} to start hacking !
-    - Edit ${whiteBright(
-        bold(`wsce.config.${template === "Typescript" ? "ts" : "js"}`)
-    )} to edit the configuration.`);
+    - Edit ${whiteBright(bold(`wsce.config.js`))} to edit the configuration.`);
 };
 
-const createDirectoryContents = (templatePath: string, newProjectPath: string) => {
-    const filesToCreate = readdirSync(templatePath);
+const createDirectoryContents = (
+    templatePath: string,
+    newProjectPath: string,
+    ignore?: string[]
+) => {
+    const filesToCreate = readdirSync(templatePath).filter((e) => !ignore?.includes(e));
     filesToCreate.forEach((file) => {
         const origFilePath = join(templatePath, file);
         const stats = statSync(origFilePath);
@@ -148,8 +165,7 @@ const createDirectoryContents = (templatePath: string, newProjectPath: string) =
         }
     });
 };
-
-export const installDir = async (dir: string) => {
+const installDir = async (dir: string) => {
     let hasYarn: boolean = false;
     try {
         await exec("yarn --version");
@@ -169,4 +185,10 @@ export const installDir = async (dir: string) => {
             "utf8"
         );
     return await exec(`cd ${dir} && ${hasYarn ? "yarn" : "npm install"}`);
+};
+
+const getGithubURL = (input: string) => {
+    const matches = input.match(GITHUB_REGEXP);
+    if (matches) return { url: `https://github.com/${matches[1]}.git`, parsed: matches[1] };
+    return null;
 };

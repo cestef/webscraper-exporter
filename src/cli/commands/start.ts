@@ -1,13 +1,18 @@
 import Yargs, { Argv } from "yargs";
 import { join } from "path";
-import { ScraperOptions, ExporterOptions, Scraper, Exporter } from "../..";
-import beforeShutdown from "../../shutdown";
-import Logger from "../../Logger";
-exports.command = "start [path]";
+import { ScraperOptions, ExporterOptions, Scraper, Exporter } from "../../index.js";
+import beforeShutdown from "../../shutdown.js";
+import Logger from "../../Logger.js";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
-exports.describe = "Start the exporter";
+export const command = "start [path]";
 
-exports.builder = (yargs: typeof Yargs) =>
+export const describe = "Start the exporter";
+
+export const builder = (yargs: typeof Yargs) =>
     yargs
         .positional("path", {
             describe: "Path to the project to start",
@@ -19,7 +24,7 @@ exports.builder = (yargs: typeof Yargs) =>
             type: "string",
             description: "The config file path",
         })
-        .default("config", join(process.cwd(), "wsce.config.js"), "wsce.config.js")
+        .default("config", "wsce.config.js")
         .option("verbose", {
             alias: "v",
             type: "boolean",
@@ -47,29 +52,37 @@ exports.builder = (yargs: typeof Yargs) =>
             description: "Run lighthouse tests",
         });
 
-exports.handler = async (args: any) => {
+export const handler = async (args: any) => {
     const logger = new Logger(true, args.v);
     let config: { scraper: ScraperOptions; exporter: ExporterOptions };
     try {
         const imported = await import(args.config);
         config = imported?.default || imported;
-    } catch (e) {
-        logger.warn(`Couldn't load the config, falling back to default.`);
-        const defaultConfig = await import(join(__dirname, "../../..", "default.wsce.config.js"));
-        config = defaultConfig?.default || defaultConfig;
+    } catch {
+        try {
+            const imported = await import(join(process.cwd(), args.config));
+            config = imported?.default || imported;
+        } catch (e) {
+            logger.warn(`Couldn't load the config, falling back to default.`);
+            logger.debug(e);
+            const defaultConfig = await import(
+                join(__dirname, "../../..", "default.wsce.config.js")
+            );
+            config = defaultConfig?.default || defaultConfig;
+        }
     }
     if (!config) return logger.error("Couldn't load the config...");
     const urls = args.urls?.split(/,| ,/g).filter(Boolean);
     const scraper = new Scraper({
         ...config.scraper,
-        verbose: args.verbose,
+        ...((config.scraper.verbose || 0) === 0 && args.verbose > 0 && { verbose: args.verbose }),
         ...(urls && urls?.length > 0 && { urls }),
         ...(typeof args.interval !== "undefined" && { port: args.interval }),
         ...(typeof args.lighthouse !== "undefined" && { port: args.lighthouse }),
     });
     const exporter = new Exporter({
         ...config.exporter,
-        verbose: args.verbose,
+        ...((config.exporter.verbose || 0) === 0 && args.verbose > 0 && { verbose: args.verbose }),
         scraper,
         ...(typeof args.port !== "undefined" && { port: args.port }),
     });

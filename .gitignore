@@ -5,3 +5,4 @@ data/
 dist/
 .DS_Store
 .swc/
+!templates/**/*

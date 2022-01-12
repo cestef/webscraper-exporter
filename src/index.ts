@@ -1,8 +1,8 @@
-import type { ScraperOptions } from "./scraper";
-import type { ExporterOptions } from "./exporter";
-export { Scraper, ScraperOptions } from "./scraper";
-export { Exporter, ExporterOptions } from "./exporter";
+import type { ScraperOptions } from "./scraper/index.js";
+import type { ExporterOptions } from "./exporter/index.js";
+export { Scraper, ScraperOptions } from "./scraper/index.js";
+export { Exporter, ExporterOptions } from "./exporter/index.js";
 export interface WsceConfig {
     scraper: ScraperOptions;
-    exporter: ExporterOptions;
+    exporter: Omit<ExporterOptions, "scraper">;
 }

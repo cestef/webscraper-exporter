@@ -1,9 +1,9 @@
 import { Browser, BrowserContext } from "puppeteer";
-import { Condition, ScraperOptions } from "..";
-import { CPUStats, getCPU } from "./cpuUsage";
-import { getCombinations } from "./functions";
-import { lhReport } from "./lighthouse";
-import { MemoryStats, getMemory } from "./memoryUage";
+import { Condition, ScraperOptions } from "../index.js";
+import { CPUStats, getCPU } from "./cpuUsage.js";
+import { getCombinations } from "./functions.js";
+import { lhReport } from "./lighthouse.js";
+import { MemoryStats, getMemory } from "./memoryUage.js";
 
 export interface ScrapeResult {
     cpuMetrics: CPUStats;

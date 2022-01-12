@@ -1,17 +1,14 @@
-import type { WsceConfig } from "webscraper-exporter";
-
-const config: WsceConfig = {
+export default {
     scraper: {
         urls: [],
         puppeteerOptions: {},
         conditions: [],
         lighthouse: false,
         interval: 60_000,
-        verbose: false,
+        verbose: 0,
     },
     exporter: {
         port: 3000,
-        verbose: false,
+        verbose: 0,
     },
 };
-module.exports = config;

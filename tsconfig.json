@@ -5,7 +5,8 @@
     "compilerOptions": {
         "resolveJsonModule": true,
         "target": "ES2020",
-        "module": "NodeNext",
+        "module": "ESNext",
+        "moduleResolution": "Node",
         "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true,
         "strict": true,

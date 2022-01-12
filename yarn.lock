@@ -918,7 +918,7 @@ is-installed-globally@^0.3.1:
 
 is-installed-globally@^0.4.0:
   version "0.4.0"
-  resolved "https://registry.npmjs.org/is-installed-globally/-/is-installed-globally-0.4.0.tgz"
+  resolved "https://registry.yarnpkg.com/is-installed-globally/-/is-installed-globally-0.4.0.tgz#9a0fd407949c30f86eb6959ef1b7994ed0b7b520"
   integrity sha512-iwGqO3J21aaSkC7jWnHP/difazwS7SFeIqxv6wEtLU8Y5KlzFTjyqcSIT0d8s4+dDhKytsk9PJZ2BkS5eZwQRQ==
   dependencies:
     global-dirs "^3.0.0"
