@@ -7,6 +7,7 @@ import Logger from "../Logger.js";
 import * as init from "./commands/init.js";
 import * as start from "./commands/start.js";
 yargs(hideBin(process.argv))
+    .scriptName("wsce")
     .help()
     .alias("h", "help")
     .command(init as any)
