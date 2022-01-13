@@ -8,7 +8,7 @@ To start creating your first addon, head to your `wsce.config.js`.
 Addons are stored as Objects in an Array in the `scraper` field
 
 ```js
-export default {
+module.exports =  {
     scraper: {
         urls: [],
         puppeteerOptions: {},
