@@ -1,6 +1,6 @@
-import addons from "./addons/index.js";
+const addons = require("./addons");
 
-export default {
+module.exports = {
     scraper: {
         urls: [],
         puppeteerOptions: {},

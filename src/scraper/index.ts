@@ -9,9 +9,9 @@ import {
 } from "puppeteer";
 import { EventEmitter } from "events";
 import puppeteer from "puppeteer";
-import Logger from "../Logger.js";
-import { TestResult } from "./types.js";
-import { test } from "./utils/scraper.js";
+import Logger from "../Logger";
+import { TestResult } from "./types";
+import { test } from "./utils/scraper";
 
 const defaultOptions: Partial<ScraperOptions> = {
     verbose: 3,
@@ -114,7 +114,7 @@ interface Addon {
      */
     when?: "before" | "after";
 
-    run: (browser: BrowserContext, page: Page, URL: string, logger: Logger) => Promise<any>;
+    run: (browser: BrowserContext, page: Page, URL: string, logger: Logger) => Promise<any> | any;
 }
 
 export { Scraper, ScraperOptions, Addon };

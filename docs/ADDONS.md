@@ -37,7 +37,7 @@ This function takes 3 arguments:
 - browser [`BrowserContext`](https://pptr.dev/#?product=Puppeteer&version=v13.0.1&show=api-class-browsercontext)
 - page [`Page`](https://pptr.dev/#?product=Puppeteer&version=v13.0.1&show=api-class-page)
 - URL `string`
-- logger [`Logger`](https://docs.cstef.dev/docs/webscraper-exporter/interfaces/Logger)
+- logger [`Logger`](https://docs.cstef.dev/docs/webscraper-exporter/classes/Logger)
 
 #### Example
 

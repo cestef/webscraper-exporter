@@ -1,10 +1,10 @@
 import { Browser, BrowserContext } from "puppeteer";
-import { Addon, ScraperOptions } from "../index.js";
-import { CPUStats, getCPU } from "./cpuUsage.js";
-import { getCombinations } from "./functions.js";
-import { lhReport } from "./lighthouse.js";
-import { MemoryStats, getMemory } from "./memoryUage.js";
-import Logger from "../../Logger.js";
+import { Addon, ScraperOptions } from "../index";
+import { CPUStats, getCPU } from "./cpuUsage";
+import { getCombinations } from "./functions";
+import { lhReport } from "./lighthouse";
+import { MemoryStats, getMemory } from "./memoryUage";
+import Logger from "../../Logger";
 import ms from "ms";
 
 export interface ScrapeResult {

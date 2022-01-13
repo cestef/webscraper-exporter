@@ -3,22 +3,14 @@ import { readdirSync, statSync, readFileSync, writeFileSync, mkdirSync, existsSy
 import { join } from "path";
 import inquirer from "inquirer";
 const { prompt, registerPrompt } = inquirer;
-import Logger from "../../Logger.js";
+import Logger from "../../Logger";
 import autocomplete from "inquirer-autocomplete-prompt";
 import fuzzy from "fuzzy";
 import axios from "axios";
 import simpleGit from "simple-git";
 const git = simpleGit();
 import { bold, whiteBright } from "colorette";
-import { exec as e } from "child_process";
-import { promisify } from "util";
-const exec = promisify(e);
-import { fileURLToPath } from "url";
-import { dirname } from "path";
 import LightSpinner from "light-spinner";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 const GITHUB_REGEXP =
     /^(?:(?:https:\/\/github.com\/([a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}\/[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38})(?:\.git)?)|([a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}\/[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}))$/i;
@@ -112,7 +104,7 @@ export const handler = async (args: any) => {
     const template = answers.template || args.template;
     const templatePath = join(__dirname, "../../../templates", template.replace("/", "-"));
     const name = answers.name || args.name;
-    const spinner = new (LightSpinner as any).default({ text: "Initializing the project..." });
+    const spinner = new LightSpinner({ text: "Initializing the project..." });
     spinner.start();
 
     const projectPath = join(process.cwd(), name);

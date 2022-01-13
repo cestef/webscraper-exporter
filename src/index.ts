@@ -1,5 +1,5 @@
-import type Logger from "./Logger.js";
-import { Addon } from "./scraper/index.js";
-export { Scraper, ScraperOptions } from "./scraper/index.js";
-export { Exporter, ExporterOptions } from "./exporter/index.js";
+import type Logger from "./Logger";
+import { Addon } from "./scraper/index";
+export { Scraper, ScraperOptions } from "./scraper/index";
+export { Exporter, ExporterOptions } from "./exporter/index";
 export { Logger, Addon };

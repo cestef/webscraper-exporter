@@ -1,2 +1,1 @@
-import Logger from "./Logger.js";
-export default [Logger];
+module.exports = [require("./Logger")];

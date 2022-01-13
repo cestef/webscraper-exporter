@@ -6,7 +6,7 @@
         "wsce": "./dist/cli/index.js"
     },
     "main": "./dist/index.js",
-    "type": "module",
+    "type": "commonjs",
     "scripts": {
         "build:watch": "tsc -p . -w",
         "build": "tsc -p ."

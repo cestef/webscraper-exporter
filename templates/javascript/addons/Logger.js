@@ -5,4 +5,4 @@ const Logger = {
         console.log("I am running on " + URL);
     },
 };
-export default Logger;
+module.exports = Logger;

@@ -88,8 +88,8 @@ const scraper = new Scraper({
     addons: [
         {
             name: "Logger",
-            when: "before"
-            run: (browser, page, URL) => {
+            when: "before",
+            run: (browser, page, URL, logger) => {
                 console.log(`I am running on ${URL}`);
             },
         },

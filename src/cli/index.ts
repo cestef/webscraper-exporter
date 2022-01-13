@@ -2,14 +2,11 @@
 
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
-import * as init from "./commands/init.js";
-import * as start from "./commands/start.js";
+import * as init from "./commands/init";
+import * as start from "./commands/start";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import { readFileSync } from "fs";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 yargs(hideBin(process.argv))
     .scriptName("wsce")
