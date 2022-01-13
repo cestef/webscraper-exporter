@@ -114,7 +114,7 @@ interface Addon {
      */
     when?: "before" | "after";
 
-    run: (browser: BrowserContext, page: Page, URL: string) => Promise<any>;
+    run: (browser: BrowserContext, page: Page, URL: string, logger: Logger) => Promise<any>;
 }
 
 export { Scraper, ScraperOptions, Addon };

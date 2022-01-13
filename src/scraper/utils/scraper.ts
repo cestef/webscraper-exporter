@@ -26,7 +26,7 @@ const scrapePage = async (
     const before = addons.filter((e) => e.when === "before" || !e.when);
     logger.debug(`Running addons that need to be ran before the test... (${before.length})`);
 
-    for await (let addon of before) await addon.run(context, page, url);
+    for await (let addon of before) await addon.run(context, page, url, logger);
 
     const start = Date.now();
     const cpuMeter = await getCPU(page.client(), 100);
@@ -50,7 +50,7 @@ const scrapePage = async (
     logger.debug(`Finished performance test for ${url}`);
     const after = addons.filter((e) => e.when === "after");
     logger.debug(`Running addons that need to be ran after the test... (${after.length})`);
-    for await (let addon of after) await addon.run(context, page, url);
+    for await (let addon of after) await addon.run(context, page, url, logger);
 
     await page.close();
 

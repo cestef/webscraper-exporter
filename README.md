@@ -106,4 +106,4 @@ const exporter = new Exporter({
 });
 exporter.start();
 ```
-For more examples, see the [`examples`](./examples) folder.
+For more examples, see the `examples` folder.

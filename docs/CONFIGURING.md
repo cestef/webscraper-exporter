@@ -25,7 +25,7 @@ module.exports = {
 - #### scraper
     - urls: `string[]` _The URLs to measure_
     - puppeteerOptions: [`PuppeteerOptions`](https://pptr.dev/#?product=Puppeteer&version=v13.0.1&show=api-puppeteerlaunchoptions) _Options object to pass to the puppeteer `launch` function_
-    - addons: `Addon[]` _see [ADDONS.md](./ADDONS.md)_
+    - addons: [`Addon[]`](https://docs.cstef.dev/docs/webscraper-exporter/interfaces/Addon) _see [ADDONS.md](./ADDONS.md)_
     - lighthouse: `boolean` _Whether to generate or not a lighthouse report_
     - interval: `number` _The scraper's interval_
     - verbose: `number` _The log level for the scraper_
