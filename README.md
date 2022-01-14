@@ -1,6 +1,6 @@
 # Webscraper Exporter
 
-A simple yet powerful [`prometheus`](https://prometheus.io) exporter for website performance metrics built using [`puppeteer`](https://pptr.dev/.
+A simple yet powerful [`prometheus`](https://prometheus.io) exporter for website performance metrics built using [`puppeteer`](https://pptr.dev/).
 
 ## CLI 
 
