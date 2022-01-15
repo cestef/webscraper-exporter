@@ -1,10 +1,8 @@
-import Yargs, { Argv } from "yargs";
 import { join } from "path";
-import { ScraperOptions, ExporterOptions, Scraper, Exporter } from "../../index";
-import beforeShutdown from "../../shutdown";
+import Yargs from "yargs";
+import { Exporter, ExporterOptions, Scraper, ScraperOptions } from "../../index";
 import Logger from "../../Logger";
-import { fileURLToPath } from "url";
-import { dirname } from "path";
+import beforeShutdown from "../../shutdown";
 
 export const command = "start [path]";
 

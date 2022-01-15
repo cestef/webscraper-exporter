@@ -1,9 +1,9 @@
-import { createServer, Server, IncomingMessage, ServerResponse } from "http";
+import { createServer, IncomingMessage, Server, ServerResponse } from "http";
 import client, { Gauge } from "prom-client";
 import url from "url";
 import { Scraper } from "../index";
-import { TestResult } from "../scraper/types";
 import Logger from "../Logger";
+import { TestResult } from "../scraper/types";
 
 const bytesIn = new Gauge({
     name: "bytes_in",
@@ -84,22 +84,22 @@ class Exporter {
                 lhrSEO.set({ url: URL }, t.lhr.categories.seo.score);
                 lhrPWA.set({ url: URL }, t.lhr.categories.pwa.score);
             }
-            for (let { scrape, addons } of t.scrape) {
+            for (let { test, addons } of t.scrape) {
                 bytesIn.set(
                     { url: URL, addons: addons.map((e) => e.name).join(",") },
-                    scrape.bytesIn
+                    test.bytesIn
                 );
                 cpuUsage.set(
                     { url: URL, addons: addons.map((e) => e.name).join(",") },
-                    scrape.cpuMetrics.average
+                    test.cpuMetrics.average
                 );
                 heapUsage.set(
                     { url: URL, addons: addons.map((e) => e.name).join(",") },
-                    scrape.memoryMetrics.JSHeapUsedSize
+                    test.memoryMetrics.JSHeapUsedSize
                 );
                 duration.set(
                     { url: URL, addons: addons.map((e) => e.name).join(",") },
-                    scrape.duration
+                    test.duration
                 );
             }
         }

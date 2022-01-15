@@ -1,4 +1,4 @@
-import { gray, bold, blueBright, whiteBright, yellow, redBright, greenBright } from "colorette";
+import { blueBright, bold, gray, greenBright, redBright, whiteBright, yellow } from "colorette";
 export default class Logger {
     constructor(private printTime: boolean, private verbose: number) {}
     log(level: string, color: any, ...args: any[]) {

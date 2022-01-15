@@ -1,10 +1,11 @@
-import { Addon } from ".";
-import type { ScrapeResult } from "./utils/scraper";
+import { BrowserContext, Page } from "puppeteer";
+import type { ScrapeResult } from ".";
+import { Logger } from "..";
 
 export interface TestResult {
     [url: string]: {
         scrape: {
-            scrape: ScrapeResult;
+            test: ScrapeResult;
             addons: Addon[];
         }[];
         lhr?: {
@@ -29,4 +30,23 @@ export interface Config {
     headless: boolean;
     emulateNetwork: boolean | { upload: number; download: number; latency: number };
     throttleCPU: boolean | number;
+}
+
+export interface Addon {
+    /**
+     * Unique name for this addon
+     */
+    name: string;
+    /**
+     * Whether the test should be ran with and without this addon
+     * @default false
+     */
+    twice?: boolean;
+    /**
+     * When to run the addon
+     * @default "before"
+     */
+    when?: "before" | "after";
+
+    run: (browser: BrowserContext, page: Page, URL: string, logger: Logger) => Promise<any> | any;
 }

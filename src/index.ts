@@ -1,5 +1,5 @@
 import type Logger from "./Logger";
-import { Addon } from "./scraper/index";
-export { Scraper, ScraperOptions } from "./scraper/index";
-export { Exporter, ExporterOptions } from "./exporter/index";
+import { Addon } from "./scraper/types";
+export { Exporter, ExporterOptions } from "./exporter";
+export { Scraper, ScraperOptions } from "./scraper";
 export { Logger, Addon };

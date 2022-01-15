@@ -1,16 +1,16 @@
-import Yargs from "yargs";
-import { readdirSync, statSync, readFileSync, writeFileSync, mkdirSync, existsSync } from "fs";
-import { join } from "path";
-import inquirer from "inquirer";
-const { prompt, registerPrompt } = inquirer;
-import Logger from "../../Logger";
-import autocomplete from "inquirer-autocomplete-prompt";
-import fuzzy from "fuzzy";
 import axios from "axios";
-import simpleGit from "simple-git";
-const git = simpleGit();
 import { bold, whiteBright } from "colorette";
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "fs";
+import fuzzy from "fuzzy";
+import inquirer from "inquirer";
+import autocomplete from "inquirer-autocomplete-prompt";
 import LightSpinner from "light-spinner";
+import { join } from "path";
+import simpleGit from "simple-git";
+import Yargs from "yargs";
+import Logger from "../../Logger";
+const { prompt, registerPrompt } = inquirer;
+const git = simpleGit();
 
 const GITHUB_REGEXP =
     /^(?:(?:https:\/\/github.com\/([a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}\/[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38})(?:\.git)?)|([a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}\/[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}))$/i;

@@ -1,17 +1,18 @@
+import { EventEmitter } from "events";
 import ms from "ms";
-import {
+import puppeteer, {
     Browser,
     BrowserConnectOptions,
     BrowserContext,
     BrowserLaunchArgumentOptions,
     LaunchOptions,
-    Page,
 } from "puppeteer";
-import { EventEmitter } from "events";
-import puppeteer from "puppeteer";
 import Logger from "../Logger";
-import { TestResult } from "./types";
-import { test } from "./utils/scraper";
+import { TestResult, Addon } from "./types";
+import { CPUStats, getCPU } from "./utils/cpuUsage";
+import { getCombinations } from "./utils/functions";
+import { lhReport } from "./utils/lighthouse";
+import { getMemory, MemoryStats } from "./utils/memoryUage";
 
 const defaultOptions: Partial<ScraperOptions> = {
     verbose: 3,
@@ -20,6 +21,11 @@ const defaultOptions: Partial<ScraperOptions> = {
 };
 declare interface Scraper {
     on(event: "testsFinish", listener: (tests: TestResult) => void): this;
+    on(event: "testsStart", listener: () => void): this;
+    on(event: "testFinish", listener: (res: TestResult[keyof TestResult]) => void): this;
+    on(event: "testStart", listener: (URL: string) => void): this;
+
+    on(event: "addonFinish", listener: (addon: Addon, result: any) => void): this;
     on(event: string, listener: (...args: any[]) => void): this;
 }
 class Scraper extends EventEmitter {
@@ -43,16 +49,19 @@ class Scraper extends EventEmitter {
     async scrape() {
         if (!this.browser) this.browser = await puppeteer.launch(this.options.puppeteerOptions);
         const tests: TestResult = {};
+        this.emit("testsStart");
         const testsStart = Date.now();
         for await (let URL of this.options.urls) {
             this.logger.debug(`Starting testing for ${URL}`);
+            this.emit("testStart", URL);
             try {
-                const { result, lhr } = await test(this.browser, this.options, URL, this.logger);
+                const { result, lhr } = await this.test(URL);
                 tests[URL] = { scrape: result, lhr };
             } catch (e) {
                 this.logger.error(`Test run failed for ${URL}, check debug for error`);
                 this.logger.debug(e);
             }
+            this.emit("testFinish", tests[URL]);
         }
         const testsEnd = Date.now();
         this.logger.info(
@@ -70,6 +79,114 @@ class Scraper extends EventEmitter {
                 })}, consider augmenting the interval.`
             );
         this.emit("testsFinish", tests);
+    }
+    async testPage(context: BrowserContext, url: string, addons: Addon[]) {
+        const page = await context.newPage();
+        await page.setCacheEnabled(false);
+        page.setDefaultNavigationTimeout(60000);
+        const before = addons.filter((e) => e.when === "before" || !e.when);
+        this.logger.debug(
+            `Running addons that need to be ran before the test... (${before.length})`
+        );
+
+        for await (let addon of before)
+            try {
+                const res = await addon.run(context, page, url, this.logger);
+                this.emit("addonFinish", addon, res);
+            } catch (e) {
+                this.logger.warn(`Failed to run the "${addon.name}" addon`);
+                this.logger.debug(e);
+            }
+
+        const start = Date.now();
+        const cpuMeter = await getCPU(page.client(), 100);
+
+        let bytesIn = 0;
+        const devTools = await page.target().createCDPSession();
+        await devTools.send("Network.enable");
+        devTools.on("Network.loadingFinished", (event) => (bytesIn += event.encodedDataLength));
+        await page.goto(url, { waitUntil: "networkidle2" });
+        await page.evaluate(() => {
+            window.scrollBy(0, window.innerHeight);
+        });
+        const bodyWidth = await page.evaluate(() => document.body.scrollWidth);
+        const bodyHeight = await page.evaluate(() => document.body.scrollHeight);
+        await page.setViewport({ width: bodyWidth, height: bodyHeight });
+
+        const cpuMetrics = cpuMeter();
+        const memoryMetrics = await getMemory(page);
+
+        const end = Date.now();
+        this.logger.debug(`Finished performance test for ${url}`);
+        const after = addons.filter((e) => e.when === "after");
+        this.logger.debug(`Running addons that need to be ran after the test... (${after.length})`);
+        for await (let addon of after)
+            try {
+                const res = await addon.run(context, page, url, this.logger);
+                this.emit("addonFinish", addon, res);
+            } catch (e) {
+                this.logger.warn(`Failed to run the "${addon.name}" addon`);
+                this.logger.debug(e);
+            }
+
+        await page.close();
+
+        return {
+            cpuMetrics,
+            memoryMetrics,
+            duration: end - start,
+            bytesIn,
+        };
+    }
+    async test(URL: string) {
+        if (!this.browser) {
+            throw new Error("Tried to start a test without init'ing the scraper");
+        }
+        let res: {
+            test: ScrapeResult;
+            addons: Addon[];
+        }[] = [];
+        let addons: { addon: Addon; status: boolean }[] = [];
+
+        for (let addon of this.options.addons) {
+            if (addon.twice)
+                addons = addons.concat(
+                    ...[
+                        { addon, status: true },
+                        { addon, status: false },
+                    ]
+                );
+            else addons.push({ addon, status: true });
+        }
+
+        const combinations = getCombinations(addons).filter((e) => {
+            const mapped = e.map((e) => e.addon);
+            return (
+                new Set(mapped).size === mapped.length &&
+                mapped.length > Object.keys(this.options.addons).length - 1
+            );
+        });
+        if (combinations.length === 0) {
+            const context = await this.browser?.createIncognitoBrowserContext();
+            res.push({ test: await this.testPage(context, URL, []), addons: [] });
+        }
+        for await (let currentTests of combinations) {
+            const context = await this.browser?.createIncognitoBrowserContext();
+            const addonsToUse = currentTests.filter((e) => e.status).map((e) => e.addon);
+            res.push({
+                test: await this.testPage(context, URL, addonsToUse),
+                addons: addonsToUse,
+            });
+        }
+        let lhr;
+        if (this.options.lighthouse) {
+            this.logger.debug("Running LightHouse...");
+            const lhStart = Date.now();
+            lhr = await lhReport(this.browser, URL);
+            const lhEnd = Date.now();
+            this.logger.debug(`Ran LightHouse in ${ms(lhEnd - lhStart, { long: true })}`);
+        }
+        return { result: res, lhr };
     }
     async stop() {
         this.logger.debug("Stopping scraper...");
@@ -98,23 +215,10 @@ interface ScraperOptions {
      */
     verbose?: number;
 }
-interface Addon {
-    /**
-     * Unique name for this addon
-     */
-    name: string;
-    /**
-     * Whether the test should be ran with and without this addon
-     * @default false
-     */
-    twice?: boolean;
-    /**
-     * When to run the addon
-     * @default "before"
-     */
-    when?: "before" | "after";
-
-    run: (browser: BrowserContext, page: Page, URL: string, logger: Logger) => Promise<any> | any;
+interface ScrapeResult {
+    cpuMetrics: CPUStats;
+    memoryMetrics: MemoryStats;
+    duration: number;
+    bytesIn: number;
 }
-
-export { Scraper, ScraperOptions, Addon };
+export { Scraper, ScraperOptions, ScrapeResult };
