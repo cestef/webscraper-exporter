@@ -128,7 +128,6 @@ export const handler = async (args: any) => {
     spinner.text = "Copying files...";
     mkdirSync(projectPath);
     createDirectoryContents(templatePath, name, ["wsce.properties.json"]);
-    installDir(name);
     spinner.stop();
     logger.success(`Finished creating your project !
     - Use ${whiteBright(bold(`cd ${name}`))} to start hacking !
@@ -155,21 +154,6 @@ const createDirectoryContents = (
             createDirectoryContents(origFilePath, join(newProjectPath, file));
         }
     });
-};
-const installDir = async (dir: string) => {
-    const packageJSONPath = join(process.cwd(), dir, "package.json");
-    if (!existsSync(packageJSONPath))
-        writeFileSync(
-            packageJSONPath,
-            readFileSync(join(__dirname, "../../..", "default.package.json"), "utf8")
-                .replace("{name}", dir)
-                .replace(
-                    "{version}",
-                    JSON.parse(readFileSync(join(__dirname, "../../../package.json"), "utf8"))
-                        .version
-                ),
-            "utf8"
-        );
 };
 
 const getGithubURL = (input: string) => {
