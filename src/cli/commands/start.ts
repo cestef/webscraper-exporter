@@ -1,8 +1,10 @@
 import { join } from "path";
 import Yargs from "yargs";
 import { Exporter, ExporterOptions, Scraper, ScraperOptions } from "../../index";
-import Logger from "../../Logger";
+import Logger from "../../utils/Logger";
 import beforeShutdown from "../../shutdown";
+import { EventEmitter } from "events";
+import bindLogs from "../../utils/bindLogs";
 
 export const command = "start [path]";
 
@@ -71,17 +73,16 @@ export const handler = async (args: any) => {
     const urls = args.urls?.split(/,| ,/g).filter(Boolean);
     const scraper = new Scraper({
         ...config.scraper,
-        ...((config.scraper.verbose || 0) === 0 && args.verbose > 0 && { verbose: args.verbose }),
         ...(urls && urls?.length > 0 && { urls }),
         ...(typeof args.interval !== "undefined" && { port: args.interval }),
         ...(typeof args.lighthouse !== "undefined" && { port: args.lighthouse }),
     });
     const exporter = new Exporter({
         ...config.exporter,
-        ...((config.exporter.verbose || 0) === 0 && args.verbose > 0 && { verbose: args.verbose }),
         scraper,
         ...(typeof args.port !== "undefined" && { port: args.port }),
     });
+    bindLogs(logger, scraper, exporter);
     scraper.start();
     exporter.start();
     beforeShutdown(async (code: any) => {

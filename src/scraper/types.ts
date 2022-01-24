@@ -1,6 +1,5 @@
 import { BrowserContext, Page } from "puppeteer";
 import type { ScrapeResult } from ".";
-import { Logger } from "..";
 
 export interface TestResult {
     [url: string]: {
@@ -48,5 +47,5 @@ export interface Addon {
      */
     when?: "before" | "after";
 
-    run: (browser: BrowserContext, page: Page, URL: string, logger: Logger) => Promise<any> | any;
+    run: (browser: BrowserContext, page: Page, URL: string) => Promise<any> | any;
 }

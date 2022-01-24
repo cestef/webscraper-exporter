@@ -13,13 +13,10 @@ export default class Logger {
         if (this.verbose >= 3) this.log("debug", gray, ...args);
     }
     info(...args: any[]) {
-        if (this.verbose >= 2) this.log("info", blueBright, ...args);
+        if (this.verbose >= 1) this.log("info", blueBright, ...args);
     }
     warn(...args: any[]) {
-        if (this.verbose >= 1) this.log("warn", yellow, ...args);
-    }
-    success(...args: any[]) {
-        if (this.verbose >= 0) this.log("success", greenBright, ...args);
+        if (this.verbose >= 2) this.log("warn", yellow, ...args);
     }
     error(...args: any[]) {
         if (this.verbose >= 0) this.log("error", redBright, ...args);

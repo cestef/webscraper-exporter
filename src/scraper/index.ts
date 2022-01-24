@@ -7,7 +7,7 @@ import puppeteer, {
     BrowserLaunchArgumentOptions,
     LaunchOptions,
 } from "puppeteer";
-import Logger from "../Logger";
+import { LogLevel } from "..";
 import { TestResult, Addon } from "./types";
 import { CPUStats, getCPU } from "./utils/cpuUsage";
 import { getCombinations } from "./utils/functions";
@@ -15,7 +15,6 @@ import { lhReport } from "./utils/lighthouse";
 import { getMemory, MemoryStats } from "./utils/memoryUage";
 
 const defaultOptions: Partial<ScraperOptions> = {
-    verbose: 3,
     lighthouse: false,
     interval: 60_000,
 };
@@ -24,8 +23,12 @@ declare interface Scraper {
     on(event: "testsStart", listener: () => void): this;
     on(event: "testFinish", listener: (res: TestResult[keyof TestResult]) => void): this;
     on(event: "testStart", listener: (URL: string) => void): this;
-
     on(event: "addonFinish", listener: (addon: Addon, result: any) => void): this;
+    on(event: "info", listener: (message: string) => void): this;
+    on(event: "warn", listener: (message: string) => void): this;
+    on(event: "error", listener: (message: string) => void): this;
+    on(event: "debug", listener: (message: string) => void): this;
+
     on(event: string, listener: (...args: any[]) => void): this;
 }
 class Scraper extends EventEmitter {
@@ -33,38 +36,63 @@ class Scraper extends EventEmitter {
     options: ScraperOptions;
     interval: NodeJS.Timeout | null;
     results: TestResult[];
-    logger: Logger;
     constructor(options: ScraperOptions) {
         super();
         this.browser = null;
         this.options = { ...defaultOptions, ...options };
         this.interval = null;
         this.results = [];
-        this.logger = new Logger(true, this.options.verbose as number);
+    }
+    private _emitLog(level: LogLevel, ...args: any[]) {
+        switch (level) {
+            case LogLevel.DEBUG:
+                this.emit("debug", args.join("\n"));
+                break;
+            case LogLevel.WARN:
+                this.emit("warn", args.join("\n"));
+                break;
+            case LogLevel.INFO:
+                this.emit("info", args.join("\n"));
+                break;
+            case LogLevel.ERROR:
+                this.emit("error", args.join("\n"));
+                break;
+        }
     }
     async start() {
-        await this.scrape();
+        this.scrape();
         this.interval = setInterval(this.scrape.bind(this), this.options.interval);
+        return this;
+    }
+    async initBrowser() {
+        this.browser = await puppeteer.launch(this.options.puppeteerOptions);
+        // Automatically reconnect puppeteer to chromium by killing the old instance and creating a new one
+        this.browser.on("disconnected", () => {
+            if (this.browser?.process() != null) this.browser?.process()?.kill("SIGINT");
+            this.initBrowser();
+            this._emitLog(LogLevel.WARN, "Browser got disconnected, resurrected puppeteer");
+        });
+        return this;
     }
     async scrape() {
-        if (!this.browser) this.browser = await puppeteer.launch(this.options.puppeteerOptions);
+        if (!this.browser) await this.initBrowser();
         const tests: TestResult = {};
         this.emit("testsStart");
         const testsStart = Date.now();
         for await (let URL of this.options.urls) {
-            this.logger.debug(`Starting testing for ${URL}`);
+            this._emitLog(LogLevel.DEBUG, `Starting testing for ${URL}`);
             this.emit("testStart", URL);
             try {
                 const { result, lhr } = await this.test(URL);
                 tests[URL] = { scrape: result, lhr };
             } catch (e) {
-                this.logger.error(`Test run failed for ${URL}, check debug for error`);
-                this.logger.debug(e);
+                this._emitLog(LogLevel.ERROR, `Test run failed for ${URL}: `, e);
             }
             this.emit("testFinish", tests[URL]);
         }
         const testsEnd = Date.now();
-        this.logger.info(
+        this._emitLog(
+            LogLevel.INFO,
             `Finished testing for each URL after ${ms(testsEnd - testsStart)}, next tests in ${ms(
                 this.options.interval as number,
                 {
@@ -73,36 +101,37 @@ class Scraper extends EventEmitter {
             )} (${new Date(Date.now() + (this.options.interval as number)).toLocaleTimeString()})`
         );
         if (testsEnd - testsStart > (this.options.interval as number) && this.results.length === 0)
-            this.logger.warn(
+            this._emitLog(
+                LogLevel.WARN,
                 `The testing took longer than ${ms(this.options.interval as number, {
                     long: true,
                 })}, consider augmenting the interval.`
             );
         this.emit("testsFinish", tests);
+        return this;
     }
     async testPage(context: BrowserContext, url: string, addons: Addon[]) {
         const page = await context.newPage();
         await page.setCacheEnabled(false);
         page.setDefaultNavigationTimeout(60000);
         const before = addons.filter((e) => e.when === "before" || !e.when);
-        this.logger.debug(
+        this._emitLog(
+            LogLevel.DEBUG,
             `Running addons that need to be ran before the test... (${before.length})`
         );
 
         for await (let addon of before)
             try {
-                const res = await addon.run(context, page, url, this.logger);
+                const res = await addon.run(context, page, url);
                 this.emit("addonFinish", addon, res);
             } catch (e) {
-                this.logger.warn(`Failed to run the "${addon.name}" addon`);
-                this.logger.debug(e);
+                this._emitLog(LogLevel.WARN, `Failed to run the "${addon.name}" addon: `, e);
             }
 
         const start = Date.now();
-        const cpuMeter = await getCPU(page.client(), 100);
-
+        const devTools = page.client();
+        const cpuMeter = await getCPU(devTools, 100);
         let bytesIn = 0;
-        const devTools = await page.target().createCDPSession();
         await devTools.send("Network.enable");
         devTools.on("Network.loadingFinished", (event) => (bytesIn += event.encodedDataLength));
         await page.goto(url, { waitUntil: "networkidle2" });
@@ -117,16 +146,18 @@ class Scraper extends EventEmitter {
         const memoryMetrics = await getMemory(page);
 
         const end = Date.now();
-        this.logger.debug(`Finished performance test for ${url}`);
+        this._emitLog(LogLevel.DEBUG, `Finished performance test for ${url}`);
         const after = addons.filter((e) => e.when === "after");
-        this.logger.debug(`Running addons that need to be ran after the test... (${after.length})`);
+        this._emitLog(
+            LogLevel.DEBUG,
+            `Running addons that need to be ran after the test... (${after.length})`
+        );
         for await (let addon of after)
             try {
-                const res = await addon.run(context, page, url, this.logger);
+                const res = await addon.run(context, page, url);
                 this.emit("addonFinish", addon, res);
             } catch (e) {
-                this.logger.warn(`Failed to run the "${addon.name}" addon`);
-                this.logger.debug(e);
+                this._emitLog(LogLevel.WARN, `Failed to run the "${addon.name}" addon: `, e);
             }
 
         await page.close();
@@ -180,18 +211,22 @@ class Scraper extends EventEmitter {
         }
         let lhr;
         if (this.options.lighthouse) {
-            this.logger.debug("Running LightHouse...");
+            this._emitLog(LogLevel.DEBUG, "Running LightHouse...");
             const lhStart = Date.now();
             lhr = await lhReport(this.browser, URL);
             const lhEnd = Date.now();
-            this.logger.debug(`Ran LightHouse in ${ms(lhEnd - lhStart, { long: true })}`);
+            this._emitLog(
+                LogLevel.DEBUG,
+                `Ran LightHouse in ${ms(lhEnd - lhStart, { long: true })}`
+            );
         }
         return { result: res, lhr };
     }
     async stop() {
-        this.logger.debug("Stopping scraper...");
+        this._emitLog(LogLevel.DEBUG, "Stopping scraper...");
         await this.browser?.close();
         this.interval && clearInterval(this.interval);
+        return this;
     }
 }
 
@@ -209,11 +244,6 @@ interface ScraperOptions {
      * @default 60000
      */
     interval?: number;
-    /**
-     * Whether to print detailled information or not
-     * @default 3
-     */
-    verbose?: number;
 }
 interface ScrapeResult {
     cpuMetrics: CPUStats;

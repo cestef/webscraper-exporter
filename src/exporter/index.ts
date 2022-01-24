@@ -2,8 +2,9 @@ import { createServer, IncomingMessage, Server, ServerResponse } from "http";
 import client, { Gauge } from "prom-client";
 import url from "url";
 import { Scraper } from "../index";
-import Logger from "../Logger";
 import { TestResult } from "../scraper/types";
+import { EventEmitter } from "events";
+import { LogLevel } from "..";
 
 const bytesIn = new Gauge({
     name: "bytes_in",
@@ -50,23 +51,45 @@ const lhrPWA = new Gauge({
     help: "LighHouse PWA Score",
     labelNames: ["url"],
 });
-
-class Exporter {
+interface Exporter {
+    on(event: "info", listener: (message: string) => void): this;
+    on(event: "warn", listener: (message: string) => void): this;
+    on(event: "error", listener: (message: string) => void): this;
+    on(event: "debug", listener: (message: string) => void): this;
+    on(event: string, listener: (...args: any[]) => void): this;
+}
+class Exporter extends EventEmitter {
     server: Server | null;
     register: client.Registry;
     scraper: Scraper;
-    logger: Logger;
     constructor(private options: ExporterOptions) {
+        super();
         this.server = null;
         this.register = client.register;
         this.scraper = options.scraper;
-        this.logger = new Logger(true, options.verbose as number);
         this.options.port = this.options.port || 3000;
+    }
+    private _emitLog(level: LogLevel, ...args: any[]) {
+        switch (level) {
+            case LogLevel.DEBUG:
+                this.emit("debug", args.join("\n"));
+                break;
+            case LogLevel.WARN:
+                this.emit("warn", args.join("\n"));
+                break;
+            case LogLevel.INFO:
+                this.emit("info", args.join("\n"));
+                break;
+            case LogLevel.ERROR:
+                this.emit("error", args.join("\n"));
+                break;
+        }
     }
     start() {
         this.server = createServer();
         this.server.listen(this.options.port);
-        this.logger.info(
+        this._emitLog(
+            LogLevel.INFO,
             `Exporter listening on http://localhost${
                 this.options.port === 80 ? "" : `:${this.options.port}`
             }/metrics`
@@ -112,7 +135,7 @@ class Exporter {
         }
     }
     stop() {
-        this.logger.debug("Stopping exporter...");
+        this._emitLog(LogLevel.DEBUG, "Stopping exporter...");
         this.server?.close();
         this.server = null;
         this.scraper.removeAllListeners();
@@ -121,7 +144,6 @@ class Exporter {
 export { Exporter };
 
 export interface ExporterOptions {
-    verbose?: number;
     port: number;
     scraper: Scraper;
 }

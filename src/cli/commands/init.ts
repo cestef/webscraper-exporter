@@ -1,5 +1,5 @@
 import axios from "axios";
-import { bold, whiteBright } from "colorette";
+import { bold, whiteBright, greenBright } from "colorette";
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "fs";
 import fuzzy from "fuzzy";
 import inquirer from "inquirer";
@@ -8,7 +8,7 @@ import LightSpinner from "light-spinner";
 import { join } from "path";
 import simpleGit from "simple-git";
 import Yargs from "yargs";
-import Logger from "../../Logger";
+import Logger from "../../utils/Logger";
 const { prompt, registerPrompt } = inquirer;
 const git = simpleGit();
 
@@ -129,9 +129,13 @@ export const handler = async (args: any) => {
     mkdirSync(projectPath);
     createDirectoryContents(templatePath, name, ["wsce.properties.json"]);
     spinner.stop();
-    logger.success(`Finished creating your project !
+    logger.log(
+        "success",
+        greenBright,
+        `Finished creating your project !
     - Use ${whiteBright(bold(`cd ${name}`))} to start hacking !
-    - Edit ${whiteBright(bold(`wsce.config.js`))} to edit the configuration.`);
+    - Edit ${whiteBright(bold(`wsce.config.js`))} to edit the configuration.`
+    );
 };
 
 const createDirectoryContents = (
