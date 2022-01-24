@@ -11,11 +11,9 @@ module.exports = {
         addons: [],
         lighthouse: false,
         interval: 60_000,
-        verbose: 0,
     },
     exporter: {
         port: 3000,
-        verbose: 0,
     },
 };
 ```
@@ -28,7 +26,5 @@ module.exports = {
     - addons: [`Addon[]`](https://docs.cstef.dev/docs/webscraper-exporter/interfaces/Addon) _see [ADDONS.md](./ADDONS.md)_
     - lighthouse: `boolean` _Whether to generate or not a lighthouse report_
     - interval: `number` _The scraper's interval_
-    - verbose: `number` _The log level for the scraper_
 - #### exporter
     - port: `number` _The port for the exporter to listen on_
-    - verbose: `number` _The log level for the exporter_

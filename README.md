@@ -95,14 +95,12 @@ const scraper = new Scraper({
         },
     ],
     lighthouse: false,
-    verbose: 3,
     interval: 60_000,
 });
 scraper.start();
 const exporter = new Exporter({ 
     scraper, 
     port: 3000, 
-    verbose: 3 
 });
 exporter.start();
 ```
