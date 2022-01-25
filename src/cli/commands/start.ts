@@ -28,6 +28,7 @@ export const builder = (yargs: typeof Yargs) =>
             type: "boolean",
             description: "Print debug logs",
             count: true,
+            default: 0,
         })
         .option("urls", {
             alias: "u",
@@ -51,7 +52,7 @@ export const builder = (yargs: typeof Yargs) =>
         });
 
 export const handler = async (args: any) => {
-    const logger = new Logger(true, args.v);
+    const logger = new Logger(true, args.v + 2);
     let config: { scraper: ScraperOptions; exporter: ExporterOptions };
     try {
         const imported = await import(args.config);
