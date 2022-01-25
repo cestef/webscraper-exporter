@@ -1,7 +1,7 @@
 const email = "example@gmail.com";
 const password = "SecretPassword";
 
-const Login = async (_, page, url, logger) => {
+const Login = async (_, page, url) => {
     try {
         await page.goto(`${url}${url.endsWith("/") ? "" : "/"}de/login`);
         const SELECTORS = {
