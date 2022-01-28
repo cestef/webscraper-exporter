@@ -18,12 +18,19 @@ const GITHUB_REGEXP =
 const TEMPLATES = readdirSync(join(__dirname, "../../../templates")).map((e) => {
     const templatePath = join(__dirname, "../../../templates", e);
     if (existsSync(join(templatePath, "wsce.properties.json")))
-        return JSON.parse(readFileSync(join(templatePath, "wsce.properties.json"), "utf8"))?.name;
+        return {
+            name: JSON.parse(readFileSync(join(templatePath, "wsce.properties.json"), "utf8"))
+                ?.name,
+            path: e,
+        };
     else
-        return e
-            .split(" ")
-            .map((w) => w[0].toUpperCase() + w.substring(1).toLowerCase())
-            .join(" ");
+        return {
+            path: e,
+            name: e
+                .split(" ")
+                .map((w) => w[0].toUpperCase() + w.substring(1).toLowerCase())
+                .join(" "),
+        };
 });
 registerPrompt("autocomplete", autocomplete);
 
@@ -58,13 +65,19 @@ export const handler = async (args: any) => {
                 input = input || "";
                 const githubMatches = input.match(GITHUB_REGEXP);
                 if (githubMatches) return [githubMatches[1]];
-                return fuzzy.filter(input, TEMPLATES).map((e) => e.original);
+                return fuzzy
+                    .filter(
+                        input,
+                        TEMPLATES.map((e) => e.name)
+                    )
+                    .map((e) => e.original);
             },
             suggestOnly: true,
             when: !Boolean(args.template),
             validate: async (input: string) => {
                 input = input || "";
-                if (TEMPLATES.some((e) => e.toLowerCase() === input.toLowerCase())) return true;
+                if (TEMPLATES.some((e) => e.name.toLowerCase() === input.toLowerCase()))
+                    return true;
                 const githubUrl = getGithubURL(input);
                 if (githubUrl) {
                     try {
@@ -77,16 +90,17 @@ export const handler = async (args: any) => {
                         } = await axios.get(
                             `https://api.github.com/repos/${githubUrl.parsed}/git/trees/${sha}`
                         );
+                        console.log(tree);
                         return (
-                            tree.some((e: string) =>
-                                ["wsce.config.js", "wsce.properties.json"].every((f) => e === f)
+                            ["wsce.config.js", "wsce.properties.json"].every((e) =>
+                                tree.some((f: any) => f.path === e)
                             ) || "The repo isn't a template"
                         );
                     } catch (e) {
                         logger.debug(`\nCouldn't GET the repo URL: ${e}`);
                         return "No Github / Template found for this";
                     }
-                }
+                } else return false;
             },
         },
         {
@@ -102,7 +116,22 @@ export const handler = async (args: any) => {
     ];
     const answers = await prompt<any>(QUESTIONS);
     const template = answers.template || args.template;
-    const templatePath = join(__dirname, "../../../templates", template.replace("/", "-"));
+    let templatePath = join(
+        __dirname,
+        "../../../templates",
+        template.replace(/http(s?):\/\/github.com\//, "").replace("/", "-")
+    );
+    if (!existsSync(templatePath))
+        templatePath = join(
+            __dirname,
+            "../../../templates",
+            TEMPLATES.find((e) => e.name.toLowerCase() === template.toLowerCase())?.path as string
+        );
+    if (!existsSync(templatePath))
+        return logger.error(
+            "Couldn't find this template, make sure it is correctly installed: ",
+            templatePath
+        );
     const name = answers.name || args.name;
     const spinner = new LightSpinner({ text: "Initializing the project..." });
     spinner.start();
