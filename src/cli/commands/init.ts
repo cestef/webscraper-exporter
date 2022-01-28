@@ -90,7 +90,6 @@ export const handler = async (args: any) => {
                         } = await axios.get(
                             `https://api.github.com/repos/${githubUrl.parsed}/git/trees/${sha}`
                         );
-                        console.log(tree);
                         return (
                             ["wsce.config.js", "wsce.properties.json"].every((e) =>
                                 tree.some((f: any) => f.path === e)
