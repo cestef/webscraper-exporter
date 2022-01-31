@@ -3,8 +3,8 @@ import Yargs from "yargs";
 import { Exporter, ExporterOptions, Scraper, ScraperOptions } from "../../index";
 import Logger from "../../utils/Logger";
 import beforeShutdown from "../../shutdown";
-import { EventEmitter } from "events";
 import bindLogs from "../../utils/bindLogs";
+import { validateConfig } from "../schema";
 
 export const command = "start [path]";
 
@@ -44,39 +44,40 @@ export const builder = (yargs: typeof Yargs) =>
             alias: "i",
             type: "number",
             description: "Scraper interval",
-        })
-        .option("lighthouse", {
-            alias: "l",
-            type: "boolean",
-            description: "Run lighthouse tests",
         });
 
 export const handler = async (args: any) => {
     const logger = new Logger(true, args.v + 2);
-    let config: { scraper: ScraperOptions; exporter: ExporterOptions };
+    let config: { scraper: ScraperOptions; exporter: ExporterOptions } | null = null;
     try {
-        const imported = await import(args.config);
+        const imported = await import(args.config.trim());
         config = imported?.default || imported;
-    } catch {
+    } catch (e) {
+        logger.debug("Couldn't load absolute path, trying relative: ", e);
         try {
-            const imported = await import(join(process.cwd(), args.config));
+            const imported = await import(join(process.cwd().trim(), args.config.trim()));
             config = imported?.default || imported;
         } catch (e) {
             logger.warn(`Couldn't load the config, falling back to default.`);
             logger.debug(e);
-            const defaultConfig = await import(
-                join(__dirname, "../../..", "default.wsce.config.js")
-            );
-            config = defaultConfig?.default || defaultConfig;
+            try {
+                const defaultConfig = await import(
+                    join(__dirname, "../../..", "config", "default.wsce.config.js")
+                );
+                config = defaultConfig?.default || defaultConfig;
+            } catch (e) {
+                logger.error("Couldn't load default config: ", e);
+            }
         }
     }
     if (!config) return logger.error("Couldn't load the config...");
+    const validationRes = validateConfig(config);
+    if (validationRes.error) return logger.error(validationRes.error.annotate());
     const urls = args.urls?.split(/,| ,/g).filter(Boolean);
     const scraper = new Scraper({
         ...config.scraper,
         ...(urls && urls?.length > 0 && { urls }),
         ...(typeof args.interval !== "undefined" && { port: args.interval }),
-        ...(typeof args.lighthouse !== "undefined" && { port: args.lighthouse }),
     });
     const exporter = new Exporter({
         ...config.exporter,

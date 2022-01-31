@@ -38,7 +38,6 @@ module.exports = {
         urls: ["https://google.com"],
         puppeteerOptions: {},
         addons: [],
-        lighthouse: false,
         interval: 60_000,
     },
     exporter: {
@@ -94,7 +93,6 @@ const scraper = new Scraper({
             },
         },
     ],
-    lighthouse: false,
     interval: 60_000,
 });
 scraper.start();

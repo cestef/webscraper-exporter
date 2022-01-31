@@ -26,31 +26,7 @@ const duration = new Gauge({
     help: "Duration of the Test (ms)",
     labelNames: ["url", "addons"],
 });
-const lhrPerf = new Gauge({
-    name: "lhr_performance_score",
-    help: "LighHouse Performance Score",
-    labelNames: ["url"],
-});
-const lhrAccess = new Gauge({
-    name: "lhr_accessibility_score",
-    help: "LighHouse Accessibility Score",
-    labelNames: ["url"],
-});
-const lhrBP = new Gauge({
-    name: "lhr_best_practices_score",
-    help: "LighHouse Best Practices Score",
-    labelNames: ["url"],
-});
-const lhrSEO = new Gauge({
-    name: "lhr_seo_score",
-    help: "LighHouse SEO Score",
-    labelNames: ["url"],
-});
-const lhrPWA = new Gauge({
-    name: "lhr_pwa_score",
-    help: "LighHouse PWA Score",
-    labelNames: ["url"],
-});
+
 interface Exporter {
     on(event: "info", listener: (message: string) => void): this;
     on(event: "warn", listener: (message: string) => void): this;
@@ -100,13 +76,6 @@ class Exporter extends EventEmitter {
     private async _handleTestsFinish(test: TestResult) {
         for (let URL in test) {
             let t = test[URL];
-            if (t.lhr) {
-                lhrPerf.set({ url: URL }, t.lhr.categories.performance.score);
-                lhrAccess.set({ url: URL }, t.lhr.categories.accessibility.score);
-                lhrBP.set({ url: URL }, t.lhr.categories["best-practices"].score);
-                lhrSEO.set({ url: URL }, t.lhr.categories.seo.score);
-                lhrPWA.set({ url: URL }, t.lhr.categories.pwa.score);
-            }
             for (let { test, addons } of t.scrape) {
                 bytesIn.set(
                     { url: URL, addons: addons.map((e) => e.name).join(",") },
@@ -129,9 +98,18 @@ class Exporter extends EventEmitter {
     }
     private async _get(req: IncomingMessage, res: ServerResponse) {
         const route = url.parse(req.url as string).pathname;
-        if (route === "/metrics") {
-            res.setHeader("Content-Type", this.register.contentType);
-            res.end(await this.register.metrics());
+        switch (route) {
+            case "/metrics": {
+                res.setHeader("Content-Type", this.register.contentType);
+                res.end(await this.register.metrics());
+                break;
+            }
+            case "/": {
+                res.setHeader("Content-Type", "text/html");
+                res.end(
+                    'webscraper-exporter, made by cstef: <a href="https://github.com/cstefFlexin/webscraper-exporter">Github</a>'
+                );
+            }
         }
     }
     stop() {

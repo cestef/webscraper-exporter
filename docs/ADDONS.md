@@ -13,7 +13,6 @@ module.exports =  {
         urls: [],
         puppeteerOptions: {},
         addons: [], // <--- Here 
-        lighthouse: false,
         interval: 60_000,
     },
     exporter: {

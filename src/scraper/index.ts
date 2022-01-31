@@ -11,11 +11,9 @@ import { LogLevel } from "..";
 import { TestResult, Addon } from "./types";
 import { CPUStats, getCPU } from "./utils/cpuUsage";
 import { getCombinations } from "./utils/functions";
-import { lhReport } from "./utils/lighthouse";
 import { getMemory, MemoryStats } from "./utils/memoryUage";
 
 const defaultOptions: Partial<ScraperOptions> = {
-    lighthouse: false,
     interval: 60_000,
 };
 declare interface Scraper {
@@ -83,8 +81,8 @@ class Scraper extends EventEmitter {
             this._emitLog(LogLevel.DEBUG, `Starting testing for ${URL}`);
             this.emit("testStart", URL);
             try {
-                const { result, lhr } = await this.test(URL);
-                tests[URL] = { scrape: result, lhr };
+                const { result } = await this.test(URL);
+                tests[URL] = { scrape: result };
             } catch (e) {
                 this._emitLog(LogLevel.ERROR, `Test run failed for ${URL}: `, e);
             }
@@ -209,18 +207,7 @@ class Scraper extends EventEmitter {
                 addons: addonsToUse,
             });
         }
-        let lhr;
-        if (this.options.lighthouse) {
-            this._emitLog(LogLevel.DEBUG, "Running LightHouse...");
-            const lhStart = Date.now();
-            lhr = await lhReport(this.browser, URL);
-            const lhEnd = Date.now();
-            this._emitLog(
-                LogLevel.DEBUG,
-                `Ran LightHouse in ${ms(lhEnd - lhStart, { long: true })}`
-            );
-        }
-        return { result: res, lhr };
+        return { result: res };
     }
     async stop() {
         this._emitLog(LogLevel.DEBUG, "Stopping scraper...");
@@ -234,11 +221,6 @@ interface ScraperOptions {
     urls: string[];
     puppeteerOptions?: LaunchOptions & BrowserLaunchArgumentOptions & BrowserConnectOptions;
     addons: Addon[];
-    /**
-     * Whether to generate a lighthouse report or not
-     * @default false
-     */
-    lighthouse?: boolean;
     /**
      * The interval in ms to run the scraper.
      * @default 60000

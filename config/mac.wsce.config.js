@@ -1,9 +1,8 @@
 module.exports = {
     scraper: {
-        urls: [],
-        puppeteerOptions: {},
-        addons: [],
+        urls: ["https://cstef.dev"],
         interval: 60_000,
+        addons: [],
     },
     exporter: {
         port: 3000,

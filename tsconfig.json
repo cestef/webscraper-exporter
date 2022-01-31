@@ -14,6 +14,5 @@
         "rootDir": "./src",
         "declaration": true
     },
-    "exclude": ["test.ts"],
     "include": ["src"]
 }

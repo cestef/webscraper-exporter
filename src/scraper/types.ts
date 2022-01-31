@@ -7,28 +7,7 @@ export interface TestResult {
             test: ScrapeResult;
             addons: Addon[];
         }[];
-        lhr?: {
-            [key: string]: any;
-            categories: {
-                [category: string]: {
-                    score: number;
-                    [key: string]: any;
-                };
-            };
-        };
     };
-}
-
-export interface Config {
-    login: boolean | { email: string; password: string };
-    testBoth: {
-        login: boolean;
-        emulateNetwork: boolean;
-    };
-    urls: string[];
-    headless: boolean;
-    emulateNetwork: boolean | { upload: number; download: number; latency: number };
-    throttleCPU: boolean | number;
 }
 
 export interface Addon {
