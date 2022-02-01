@@ -1,5 +1,7 @@
 const addons = require("./addons");
-
+/**
+ * @type {import("webscraper-exporter").WsceConfig}
+ */
 module.exports = {
     scraper: {
         urls: [],

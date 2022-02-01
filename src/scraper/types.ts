@@ -5,12 +5,12 @@ export interface TestResult {
     [url: string]: {
         scrape: {
             test: ScrapeResult;
-            addons: Addon[];
+            addons: IAddon[];
         }[];
     };
 }
 
-export interface Addon {
+export interface IAddon {
     /**
      * Unique name for this addon
      */

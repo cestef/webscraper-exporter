@@ -1,7 +1,7 @@
-import { Addon } from "./scraper/types";
+import { IAddon } from "./scraper/types";
 export { Exporter, ExporterOptions } from "./exporter";
 export { Scraper, ScraperOptions } from "./scraper";
-export { Addon };
+export { IAddon };
 export enum LogLevel {
     ERROR = 0,
     INFO = 1,

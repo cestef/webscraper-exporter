@@ -1,7 +1,7 @@
 declare module "webscraper-exporter" {
     interface ScraperOptions {
         urls: string[];
-        puppeteerOptions?: LaunchOptions & BrowserLaunchArgumentOptions & BrowserConnectOptions;
+        puppeteerOptions?: any;
         addons: Addon[];
         /**
          * The interval in ms to run the scraper.
@@ -24,7 +24,7 @@ declare module "webscraper-exporter" {
          * @default "before"
          */
         when?: "before" | "after";
-        run: (browser: BrowserContext, page: Page, URL: string) => Promise<any> | any;
+        run: (browser: any, page: any, URL: string) => Promise<any> | any;
     }
     interface ExporterOptions {
         port: number;

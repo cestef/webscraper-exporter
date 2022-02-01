@@ -1,3 +1,6 @@
+/**
+ * @type {import("webscraper-exporter").WsceConfig}
+ */
 module.exports = {
     scraper: {
         urls: [],

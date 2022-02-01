@@ -8,7 +8,7 @@ import puppeteer, {
     LaunchOptions,
 } from "puppeteer";
 import { LogLevel } from "..";
-import { TestResult, Addon } from "./types";
+import { TestResult, IAddon } from "./types";
 import { CPUStats, getCPU } from "./utils/cpuUsage";
 import { getCombinations } from "./utils/functions";
 import { getMemory, MemoryStats } from "./utils/memoryUage";
@@ -17,11 +17,13 @@ const defaultOptions: Partial<ScraperOptions> = {
     interval: 60_000,
 };
 declare interface Scraper {
+    on(event: "browserReady", listener: (browser: Browser) => void): this;
+    on(event: "browserDisconnected", listener: () => void): this;
     on(event: "testsFinish", listener: (tests: TestResult) => void): this;
     on(event: "testsStart", listener: () => void): this;
     on(event: "testFinish", listener: (res: TestResult[keyof TestResult]) => void): this;
     on(event: "testStart", listener: (URL: string) => void): this;
-    on(event: "addonFinish", listener: (addon: Addon, result: any) => void): this;
+    on(event: "addonFinish", listener: (addon: IAddon, result: any) => void): this;
     on(event: "info", listener: (message: string) => void): this;
     on(event: "warn", listener: (message: string) => void): this;
     on(event: "error", listener: (message: string) => void): this;
@@ -58,21 +60,25 @@ class Scraper extends EventEmitter {
         }
     }
     async start() {
+        await this.initBrowser();
         this.scrape();
         this.interval = setInterval(this.scrape.bind(this), this.options.interval);
         return this;
     }
-    async initBrowser() {
+    private async initBrowser() {
+        this.browser?.removeAllListeners();
         this.browser = await puppeteer.launch(this.options.puppeteerOptions);
         // Automatically reconnect puppeteer to chromium by killing the old instance and creating a new one
         this.browser.on("disconnected", () => {
+            this.emit("browserDisconnected");
             if (this.browser?.process() != null) this.browser?.process()?.kill("SIGINT");
             this.initBrowser();
             this._emitLog(LogLevel.WARN, "Browser got disconnected, resurrected puppeteer");
         });
+        this.emit("browserReady", this.browser);
         return this;
     }
-    async scrape() {
+    private async scrape() {
         if (!this.browser) await this.initBrowser();
         const tests: TestResult = {};
         this.emit("testsStart");
@@ -108,7 +114,7 @@ class Scraper extends EventEmitter {
         this.emit("testsFinish", tests);
         return this;
     }
-    async testPage(context: BrowserContext, url: string, addons: Addon[]) {
+    private async testPage(context: BrowserContext, url: string, addons: IAddon[]) {
         const page = await context.newPage();
         await page.setCacheEnabled(false);
         page.setDefaultNavigationTimeout(60000);
@@ -167,15 +173,15 @@ class Scraper extends EventEmitter {
             bytesIn,
         };
     }
-    async test(URL: string) {
+    private async test(URL: string) {
         if (!this.browser) {
             throw new Error("Tried to start a test without init'ing the scraper");
         }
         let res: {
             test: ScrapeResult;
-            addons: Addon[];
+            addons: IAddon[];
         }[] = [];
-        let addons: { addon: Addon; status: boolean }[] = [];
+        let addons: { addon: IAddon; status: boolean }[] = [];
 
         for (let addon of this.options.addons) {
             if (addon.twice)
@@ -220,7 +226,7 @@ class Scraper extends EventEmitter {
 interface ScraperOptions {
     urls: string[];
     puppeteerOptions?: LaunchOptions & BrowserLaunchArgumentOptions & BrowserConnectOptions;
-    addons: Addon[];
+    addons: IAddon[];
     /**
      * The interval in ms to run the scraper.
      * @default 60000
