@@ -14,9 +14,6 @@ import Yargs from "yargs";
 import Logger from "../../utils/Logger";
 const { prompt } = inquirer;
 
-const GITHUB_REGEXP =
-    /^(?:(?:https:\/\/github.com\/([a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}\/[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38})(?:\.git)?)|([a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}\/[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}))$/i;
-
 const templatesPath = join(__dirname, "../../../templates");
 const TEMPLATES = readdirSync(templatesPath)
     .filter((e) => statSync(join(templatesPath, e)).isDirectory())
@@ -63,8 +60,8 @@ export const handler = async (args: any) => {
         {
             name: "template",
             type: "list",
-            choices: TEMPLATES,
-            message: "What project template would you like to generate?",
+            choices: TEMPLATES.map((e) => ({ name: e.name, value: e.path })),
+            message: "What project template would you like to generate ?",
             when: !Boolean(args.template),
         },
         {
@@ -98,7 +95,7 @@ export const handler = async (args: any) => {
     }
 
     mkdirSync(projectPath);
-    createDirectoryContents(templatePath, name, ["wsce.properties.json"]);
+    createDirectoryContents(templatePath, name, ["wsce.properties.json", ".git"]);
     if (args.typings)
         copyFileSync(join(templatesPath, "wsce.d.ts"), join(process.cwd(), name, "wsce.d.ts"));
     logger.log(

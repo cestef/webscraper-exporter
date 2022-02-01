@@ -53,20 +53,19 @@ export const handler = async (args: any) => {
         const imported = await import(args.config.trim());
         config = imported?.default || imported;
     } catch (e) {
-        logger.debug("Couldn't load absolute path, trying relative: " + e);
+        logger.debug(`Couldn't load absolute path, trying with relative... ${e}`);
         try {
             const imported = await import(join(process.cwd().trim(), args.config.trim()));
             config = imported?.default || imported;
         } catch (e) {
-            logger.warn(`Couldn't load the config, falling back to default.`);
-            logger.debug(e);
+            logger.warn(`Couldn't load relative path, falling back to default.${e}`);
             try {
                 const defaultConfig = await import(
                     join(__dirname, "../../..", "config", "default.wsce.config.js")
                 );
                 config = defaultConfig?.default || defaultConfig;
             } catch (e) {
-                logger.error("Couldn't load default config: ", e);
+                return logger.error(`Couldn't load default config: ${e}`);
             }
         }
     }

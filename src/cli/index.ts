@@ -18,4 +18,5 @@ yargs(hideBin(process.argv))
     .command(init as any)
     .command(start as any)
     .command(template as any)
+    .detectLocale(false)
     .demandCommand().argv;

@@ -41,7 +41,7 @@ export const builder = (yargs: typeof Yargs) =>
     yargs.positional("command", {
         describe: "The command to execute",
         type: "string",
-        choices: ["add", "remove"],
+        choices: ["add", "remove", "list"],
     });
 
 export const handler = async (args: any) => {
@@ -94,7 +94,9 @@ export const handler = async (args: any) => {
                 logger.log(
                     "success",
                     greenBright,
-                    "Successfully copied the template, you can now use it: " + templateName
+                    `Successfully cloned the template, you can now use it: ${whiteBright(
+                        bold(templateName)
+                    )}`
                 );
             } else {
                 logger.info("Copying the template...");
@@ -135,6 +137,13 @@ export const handler = async (args: any) => {
                 }.`
             );
 
+            break;
+        }
+        case "list": {
+            console.log(`Templates dir: ${whiteBright(bold(templatesPath))}`);
+            console.log(
+                TEMPLATES.map((e) => `- ${e.name} => ${whiteBright(bold(e.path))}`).join("\n")
+            );
             break;
         }
     }
