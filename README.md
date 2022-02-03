@@ -19,7 +19,7 @@ npm install --global webscraper-exporter
 or 
 
 ```bash
-yarn add --global webscraper-exporter
+yarn global add webscraper-exporter
 ```
 
 You can then check if everything went OK by running:
