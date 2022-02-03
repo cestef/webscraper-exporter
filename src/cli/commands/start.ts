@@ -1,10 +1,16 @@
-import { join } from "path";
+import { join, parse } from "path";
 import Yargs from "yargs";
 import { Exporter, ExporterOptions, Scraper, ScraperOptions } from "../../index";
 import Logger from "../../utils/Logger";
 import beforeShutdown from "../../shutdown";
 import bindLogs from "../../utils/bindLogs";
 import { validateConfig } from "../schema";
+import findConfig from "../../utils/config";
+import { load } from "../../utils/config";
+import { prompt } from "inquirer";
+import { bold, whiteBright } from "colorette";
+import shorten from "path-shorten";
+import portInUse from "../../utils/portInUse";
 
 export const command = "start [path]";
 
@@ -22,7 +28,6 @@ export const builder = (yargs: typeof Yargs) =>
             type: "string",
             description: "The config file path",
         })
-        .default("config", "wsce.config.js")
         .option("verbose", {
             alias: "v",
             type: "boolean",
@@ -48,24 +53,49 @@ export const builder = (yargs: typeof Yargs) =>
 
 export const handler = async (args: any) => {
     const logger = new Logger(true, args.v + 2);
+
     let config: { scraper: ScraperOptions; exporter: ExporterOptions } | null = null;
-    try {
-        const imported = await import(args.config.trim());
-        config = imported?.default || imported;
-    } catch (e) {
-        logger.debug(`Couldn't load absolute path, trying with relative... ${e}`);
-        try {
-            const imported = await import(join(process.cwd().trim(), args.config.trim()));
-            config = imported?.default || imported;
-        } catch (e) {
-            logger.warn(`Couldn't load relative path, falling back to default.${e}`);
-            try {
-                const defaultConfig = await import(
-                    join(__dirname, "../../..", "config", "default.wsce.config.js")
-                );
-                config = defaultConfig?.default || defaultConfig;
-            } catch (e) {
-                return logger.error(`Couldn't load default config: ${e}`);
+    const loadDefault = async () => {
+        logger.warn("Falling back to default config.");
+        const loaded = await load(join(__dirname, "../../..", "config", "default.wsce.config.js"));
+        if (!loaded.config) throw new Error(`Couldn't load default config. ${loaded.error}`);
+        config = loaded.config;
+    };
+    if (args.config) {
+        let loaded = await load(args.config);
+        if (!loaded.config) await loadDefault();
+        else config = loaded.config;
+    } else {
+        let configPaths = findConfig(process.cwd());
+        switch (configPaths.length) {
+            case 0: {
+                logger.warn("No config found in the cwd.");
+                await loadDefault();
+                break;
+            }
+            case 1: {
+                const loaded = await load(configPaths[0]);
+                if (!loaded.config) await loadDefault();
+                else config = loaded.config;
+                break;
+            }
+            default: {
+                const { selected } = await prompt({
+                    message: "Multiple configs were found, select the one you want to use",
+                    name: "selected",
+                    type: "list",
+                    choices: configPaths.map((e) => {
+                        const parsed = parse(e);
+                        return {
+                            name: join(shorten(parsed.dir), whiteBright(bold(parsed.base))),
+                            value: e,
+                        };
+                    }),
+                });
+                const loaded = await load(selected);
+                if (!loaded.config) await loadDefault();
+                else config = loaded.config;
+                break;
             }
         }
     }
@@ -84,7 +114,18 @@ export const handler = async (args: any) => {
         ...(typeof args.port !== "undefined" && { port: args.port }),
     });
     bindLogs(logger, scraper, exporter);
+    if (await portInUse(exporter.options.port)) {
+        const { useNewPort } = await prompt({
+            name: "useNewPort",
+            message: `The port ${exporter.options.port} is already in use, do you want to use another port ?`,
+            type: "confirm",
+        });
+        if (useNewPort) {
+            exporter.options.port++;
+        } else return process.exit();
+    }
     scraper.start();
+
     exporter.start();
     beforeShutdown(async (code: any) => {
         exporter.stop();

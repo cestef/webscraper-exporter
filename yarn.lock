@@ -594,6 +594,11 @@ path-is-absolute@^1.0.0:
   resolved "https://registry.npmjs.org/path-is-absolute/-/path-is-absolute-1.0.1.tgz"
   integrity sha1-F0uSaHNVNP+8es5r9TpanhtcX18=
 
+path-shorten@^0.1.2:
+  version "0.1.2"
+  resolved "https://registry.yarnpkg.com/path-shorten/-/path-shorten-0.1.2.tgz#3cb8eb7f4e8e13a4c9a1a0b0ee9a56af46632741"
+  integrity sha512-7OOVjTG2oG2n5aE3mgJwlWXiu0pdO20yo6dz3+elmW1Zsec7rADHYfAW1V0RrJxPm4lgA6XdwQ9DcsUps+Lw6Q==
+
 pend@~1.2.0:
   version "1.2.0"
   resolved "https://registry.npmjs.org/pend/-/pend-1.2.0.tgz"

@@ -17,4 +17,4 @@ RUN yarn build
 RUN npm link
 
 EXPOSE 3000
-ENTRYPOINT [ "wsce", "start", "-vvv", "-c /usr/src/app/config/wsce.config.js"]
+ENTRYPOINT [ "wsce", "start", "-vvv"]

@@ -82,6 +82,8 @@ class Scraper extends EventEmitter {
         if (!this.browser) await this.initBrowser();
         const tests: TestResult = {};
         this.emit("testsStart");
+        if (this.options.urls.length === 0)
+            this._emitLog(LogLevel.WARN, "You didn't provide any url for testing.");
         const testsStart = Date.now();
         for await (let URL of this.options.urls) {
             this._emitLog(LogLevel.DEBUG, `Starting testing for ${URL}`);

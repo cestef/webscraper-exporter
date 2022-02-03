@@ -38,7 +38,7 @@ class Exporter extends EventEmitter {
     server: Server | null;
     register: client.Registry;
     scraper: Scraper;
-    constructor(private options: ExporterOptions) {
+    constructor(public options: ExporterOptions) {
         super();
         this.server = null;
         this.register = client.register;

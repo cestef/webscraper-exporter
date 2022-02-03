@@ -5,6 +5,6 @@ module.exports = {
         addons: [],
     },
     exporter: {
-        port: 3000,
+        port: 3001,
     },
 };
