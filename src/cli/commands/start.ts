@@ -49,6 +49,12 @@ export const builder = (yargs: typeof Yargs) =>
             alias: "i",
             type: "number",
             description: "Scraper interval",
+        })
+        .option("yes", {
+            alias: "y",
+            type: "boolean",
+            description: "Whether to skip interactive questions and choose the default response",
+            default: false,
         });
 
 export const handler = async (args: any) => {
@@ -91,8 +97,9 @@ export const handler = async (args: any) => {
                             value: e,
                         };
                     }),
+                    when: !args.yes,
                 });
-                const loaded = await load(selected);
+                const loaded = await load(selected || configPaths[0]);
                 if (!loaded.config) await loadDefault();
                 else config = loaded.config;
                 break;

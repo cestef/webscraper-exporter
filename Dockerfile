@@ -17,4 +17,4 @@ RUN yarn build
 RUN npm link
 
 EXPOSE 3000
-ENTRYPOINT [ "wsce", "start", "-vvv"]
+ENTRYPOINT [ "wsce", "start", "-vvv", "-y", "-c /usr/src/config/docker.wsce.config.js"]

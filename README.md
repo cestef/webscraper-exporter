@@ -53,10 +53,10 @@ For further information on the configuration, see [CONFIGURING.md](./docs/CONFIG
 You can start the exporter by simply executing:
 
 ```
-wsce
+wsce start
 ```
 
-By default, if no port is provided, the exporter will listen on port `3000`
+You can then access the metrics at http://localhost:3000
 
 If you want more detailled logs, you can pass the `-v` argument.
 

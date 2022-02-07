@@ -85,7 +85,7 @@ class Scraper extends EventEmitter {
         if (this.options.urls.length === 0)
             this._emitLog(LogLevel.WARN, "You didn't provide any url for testing.");
         const testsStart = Date.now();
-        for await (let URL of this.options.urls) {
+        for (let URL of this.options.urls) {
             this._emitLog(LogLevel.DEBUG, `Starting testing for ${URL}`);
             this.emit("testStart", URL);
             try {
@@ -126,7 +126,7 @@ class Scraper extends EventEmitter {
             `Running addons that need to be ran before the test... (${before.length})`
         );
 
-        for await (let addon of before)
+        for (let addon of before)
             try {
                 const res = await addon.run(context, page, url);
                 this.emit("addonFinish", addon, res);
@@ -158,7 +158,7 @@ class Scraper extends EventEmitter {
             LogLevel.DEBUG,
             `Running addons that need to be ran after the test... (${after.length})`
         );
-        for await (let addon of after)
+        for (let addon of after)
             try {
                 const res = await addon.run(context, page, url);
                 this.emit("addonFinish", addon, res);
@@ -207,7 +207,7 @@ class Scraper extends EventEmitter {
             const context = await this.browser?.createIncognitoBrowserContext();
             res.push({ test: await this.testPage(context, URL, []), addons: [] });
         }
-        for await (let currentTests of combinations) {
+        for (let currentTests of combinations) {
             const context = await this.browser?.createIncognitoBrowserContext();
             const addonsToUse = currentTests.filter((e) => e.status).map((e) => e.addon);
             res.push({

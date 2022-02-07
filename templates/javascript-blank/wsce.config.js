@@ -1,5 +1,5 @@
 /**
- * @type {import("webscraper-exporter").WsceConfig}
+ * @type {import("./wsce").WsceConfig}
  */
 module.exports = {
     scraper: {

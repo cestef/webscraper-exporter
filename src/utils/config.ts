@@ -1,5 +1,5 @@
 import { readdirSync } from "fs-extra";
-import path, { resolve, dirname } from "path";
+import path, { resolve, parse } from "path";
 import { join } from "path";
 const getFiles = (dir: string): string[] => {
     const dirents = readdirSync(dir, { withFileTypes: true });
@@ -11,9 +11,11 @@ const getFiles = (dir: string): string[] => {
 };
 
 export default (basePath: string): string[] => {
-    var testedFolder = dirname(basePath);
-    const files = getFiles(testedFolder);
-    const configsPaths = files.filter((e) => /^(?:.*\.)?wsce.config.js$/.test(e));
+    const files = getFiles(basePath);
+    const configsPaths = files.filter((e) =>
+        /^(?:(?!default).*\.)?wsce.config.js$/.test(parse(e).base)
+    );
+    console.log(configsPaths);
     return configsPaths;
 };
 

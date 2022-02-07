@@ -34,7 +34,7 @@ This function takes 3 arguments:
 - browser [`BrowserContext`](https://pptr.dev/#?product=Puppeteer&version=v13.0.1&show=api-class-browsercontext)
 - page [`Page`](https://pptr.dev/#?product=Puppeteer&version=v13.0.1&show=api-class-page)
 - URL `string`
-- logger [`Logger`](https://docs.cstef.dev/docs/webscraper-exporter/classes/Logger)
+
 
 #### Example
 
@@ -43,8 +43,8 @@ This function takes 3 arguments:
     name: "Logger",
     when: "after",
     twice: false,
-    run: (browser, page, URL, logger) => {
-        logger.debug(`Test on ${URL} finished 🦄`)
+    run: (browser, page, URL) => {
+        cnosole.log(`Test on ${URL} finished 🦄`)
     }
 }
 ```
