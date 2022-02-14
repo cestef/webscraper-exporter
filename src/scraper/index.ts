@@ -18,7 +18,7 @@ const defaultOptions: Partial<ScraperOptions> = {
 };
 declare interface Scraper {
     on(event: "browserReady", listener: (browser: Browser) => void): this;
-    on(event: "browserDisconnected", listener: () => void): this;
+    on(event: "browserDisconnected", listener: (browser: Browser) => void): this;
     on(event: "testsFinish", listener: (tests: TestResult) => void): this;
     on(event: "testsStart", listener: () => void): this;
     on(event: "testFinish", listener: (res: TestResult[keyof TestResult]) => void): this;
@@ -70,7 +70,7 @@ class Scraper extends EventEmitter {
         this.browser = await puppeteer.launch(this.options.puppeteerOptions);
         // Automatically reconnect puppeteer to chromium by killing the old instance and creating a new one
         this.browser.on("disconnected", () => {
-            this.emit("browserDisconnected");
+            this.emit("browserDisconnected", this.browser);
             if (this.browser?.process() != null) this.browser?.process()?.kill("SIGINT");
             this.initBrowser();
             this._emitLog(LogLevel.WARN, "Browser got disconnected, resurrected puppeteer");
