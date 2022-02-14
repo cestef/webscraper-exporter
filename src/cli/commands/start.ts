@@ -67,10 +67,12 @@ export const handler = async (args: any) => {
         if (!loaded.config) throw new Error(`Couldn't load default config. ${loaded.error}`);
         config = loaded.config;
     };
+    let path: string = "";
     if (args.config) {
         let loaded = await load(args.config);
         if (!loaded.config) await loadDefault();
         else config = loaded.config;
+        path = args.config;
     } else {
         let configPaths = findConfig(process.cwd());
         switch (configPaths.length) {
@@ -99,7 +101,8 @@ export const handler = async (args: any) => {
                     }),
                     when: !args.yes,
                 });
-                const loaded = await load(selected || configPaths[0]);
+                path = selected || configPaths[0];
+                const loaded = await load(path);
                 if (!loaded.config) await loadDefault();
                 else config = loaded.config;
                 break;
@@ -109,6 +112,7 @@ export const handler = async (args: any) => {
     if (!config) return logger.error("Couldn't load the config...");
     const validationRes = validateConfig(config);
     if (validationRes.error) return logger.error(validationRes.error.annotate());
+    logger.debug(`Using ${parse(path).base} as config.`);
     const urls = args.urls?.split(/,| ,/g).filter(Boolean);
     const scraper = new Scraper({
         ...config.scraper,

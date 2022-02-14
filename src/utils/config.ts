@@ -15,7 +15,6 @@ export default (basePath: string): string[] => {
     const configsPaths = files.filter((e) =>
         /^(?:(?!default).*\.)?wsce.config.js$/.test(parse(e).base)
     );
-    console.log(configsPaths);
     return configsPaths;
 };
 

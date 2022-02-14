@@ -1,11 +1,11 @@
 import { nanoid } from "nanoid";
 import type { BrowserContext, Page } from "puppeteer";
-import type { IAddon } from "../scraper/types";
+import { ScrapeResult } from "../scraper";
 
-export default class Addon implements IAddon {
+export default class Addon {
     name: string;
-    when: "before" | "after";
-    run: (browser: BrowserContext, page: Page, URL: string) => Promise<any> | any;
+    when: WhenToRun;
+    run: RunFunction<WhenToRun>;
     twice: boolean;
     constructor(options?: IAddon) {
         this.name = options?.name || nanoid();
@@ -17,7 +17,7 @@ export default class Addon implements IAddon {
         this.name = name;
         return this;
     }
-    setWhen(when: "before" | "after") {
+    setWhen(when: WhenToRun) {
         this.when = when;
         return this;
     }
@@ -25,8 +25,37 @@ export default class Addon implements IAddon {
         this.twice = twice;
         return this;
     }
-    setRun(run: (browser: BrowserContext, page: Page, URL: string) => Promise<any> | any) {
+    setRun(run: RunFunction<WhenToRun>) {
         this.run = run;
         return this;
     }
+}
+
+export type WhenToRun = "before" | "after";
+export type RunFunction<T extends WhenToRun> = T extends "before"
+    ? (browser: BrowserContext, page: Page, URL: string) => Promise<any> | any
+    : (
+          browser: BrowserContext,
+          page: Page,
+          URL: string,
+          result: ScrapeResult
+      ) => Promise<any> | any;
+
+export interface IAddon<T extends WhenToRun = WhenToRun> {
+    /**
+     * Unique name for this addon
+     */
+    name: string;
+    /**
+     * Whether the test should be ran with and without this addon
+     * @default false
+     */
+    twice?: boolean;
+    /**
+     * When to run the addon
+     * @default "before"
+     */
+    when?: T;
+
+    run: RunFunction<T>;
 }

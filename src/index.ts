@@ -1,4 +1,4 @@
-import { IAddon } from "./scraper/types";
+import { IAddon } from "./utils/Addon";
 export { Exporter, ExporterOptions } from "./exporter";
 export { Scraper, ScraperOptions } from "./scraper";
 export { IAddon };

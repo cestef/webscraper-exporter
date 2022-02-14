@@ -7,8 +7,8 @@ import puppeteer, {
     BrowserLaunchArgumentOptions,
     LaunchOptions,
 } from "puppeteer";
-import { LogLevel } from "..";
-import { TestResult, IAddon } from "./types";
+import { IAddon, LogLevel } from "..";
+import { TestResult } from "./types";
 import { CPUStats, getCPU } from "./utils/cpuUsage";
 import { getCombinations } from "./utils/functions";
 import { getMemory, MemoryStats } from "./utils/memoryUage";
@@ -120,7 +120,7 @@ class Scraper extends EventEmitter {
         const page = await context.newPage();
         await page.setCacheEnabled(false);
         page.setDefaultNavigationTimeout(60000);
-        const before = addons.filter((e) => e.when === "before" || !e.when);
+        const before = addons.filter((e) => e.when === "before" || !e.when) as IAddon<"before">[];
         this._emitLog(
             LogLevel.DEBUG,
             `Running addons that need to be ran before the test... (${before.length})`
@@ -153,14 +153,15 @@ class Scraper extends EventEmitter {
 
         const end = Date.now();
         this._emitLog(LogLevel.DEBUG, `Finished performance test for ${url}`);
-        const after = addons.filter((e) => e.when === "after");
+        const after = addons.filter((e) => e.when === "after") as IAddon<"after">[];
         this._emitLog(
             LogLevel.DEBUG,
             `Running addons that need to be ran after the test... (${after.length})`
         );
+        const scrapeRes = { cpuMetrics, memoryMetrics, duration: end - start, bytesIn };
         for (let addon of after)
             try {
-                const res = await addon.run(context, page, url);
+                const res = await addon.run(context, page, url, scrapeRes);
                 this.emit("addonFinish", addon, res);
             } catch (e) {
                 this._emitLog(LogLevel.WARN, `Failed to run the "${addon.name}" addon: `, e);
@@ -168,12 +169,7 @@ class Scraper extends EventEmitter {
 
         await page.close();
 
-        return {
-            cpuMetrics,
-            memoryMetrics,
-            duration: end - start,
-            bytesIn,
-        };
+        return scrapeRes;
     }
     private async test(URL: string) {
         if (!this.browser) {
