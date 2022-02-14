@@ -11,6 +11,7 @@ import { prompt } from "inquirer";
 import { bold, whiteBright } from "colorette";
 import shorten from "path-shorten";
 import portInUse from "../../utils/portInUse";
+import { readdirSync } from "fs-extra";
 
 export const command = "start [path]";
 
@@ -59,19 +60,23 @@ export const builder = (yargs: typeof Yargs) =>
 
 export const handler = async (args: any) => {
     const logger = new Logger(true, args.v + 2);
-
     let config: { scraper: ScraperOptions; exporter: ExporterOptions } | null = null;
+    let path: string = "";
+
     const loadDefault = async () => {
         logger.warn("Falling back to default config.");
-        const loaded = await load(join(__dirname, "../../..", "config", "default.wsce.config.js"));
+        const defaultPath = join(__dirname, "../../..", "config", "default.wsce.config.js");
+        const loaded = await load(defaultPath);
         if (!loaded.config) throw new Error(`Couldn't load default config. ${loaded.error}`);
         config = loaded.config;
+        path = defaultPath;
     };
-    let path: string = "";
     if (args.config) {
         let loaded = await load(args.config);
-        if (!loaded.config) await loadDefault();
-        else config = loaded.config;
+        if (!loaded.config) {
+            await loadDefault();
+            logger.debug(loaded.error);
+        } else config = loaded.config;
         path = args.config;
     } else {
         let configPaths = findConfig(process.cwd());
