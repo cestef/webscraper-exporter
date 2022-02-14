@@ -41,7 +41,7 @@ module.exports = {
         interval: 60_000,
     },
     exporter: {
-        port: 3000
+        port: 9924
     },
 };
 ```
@@ -56,7 +56,7 @@ You can start the exporter by simply executing:
 wsce start
 ```
 
-You can then access the metrics at http://localhost:3000
+You can then access the metrics at http://localhost:9924
 
 If you want more detailled logs, you can pass the `-v` argument.
 
@@ -98,7 +98,7 @@ const scraper = new Scraper({
 scraper.start();
 const exporter = new Exporter({ 
     scraper, 
-    port: 3000, 
+    port: 9924, 
 });
 exporter.start();
 ```

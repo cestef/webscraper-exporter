@@ -43,7 +43,7 @@ class Exporter extends EventEmitter {
         this.server = null;
         this.register = client.register;
         this.scraper = options.scraper;
-        this.options.port = this.options.port || 3000;
+        this.options.port = this.options.port || 9924;
     }
     private _emitLog(level: LogLevel, ...args: any[]) {
         switch (level) {
@@ -107,7 +107,7 @@ class Exporter extends EventEmitter {
             case "/": {
                 res.setHeader("Content-Type", "text/html");
                 res.end(
-                    'webscraper-exporter, made by cstef: <a href="https://github.com/cstefFlexin/webscraper-exporter">Github</a>'
+                    'webscraper-exporter, made by cstef: <a href="https://github.com/cstefFlexin/webscraper-exporter">Github</a><br><a href="/metrics">Metrics</a>'
                 );
             }
         }

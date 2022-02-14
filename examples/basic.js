@@ -6,5 +6,5 @@ const scraper = new Scraper({
     interval: 60_000,
 });
 scraper.start();
-const exporter = new Exporter({ scraper, port: 3000 });
+const exporter = new Exporter({ scraper, port: 9924 });
 exporter.start();

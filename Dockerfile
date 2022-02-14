@@ -16,5 +16,5 @@ RUN yarn
 RUN yarn build
 RUN npm link
 
-EXPOSE 3000
+EXPOSE 9924
 ENTRYPOINT [ "wsce", "start", "-v", "-y"]

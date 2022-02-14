@@ -10,6 +10,6 @@ module.exports = {
         interval: 60_000,
     },
     exporter: {
-        port: 3000,
+        port: 9924,
     },
 };
