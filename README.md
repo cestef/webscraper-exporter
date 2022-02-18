@@ -88,7 +88,7 @@ const scraper = new Scraper({
         {
             name: "Logger",
             when: "before",
-            run: (browser, page, URL, logger) => {
+            run: (browser, page, URL) => {
                 console.log(`I am running on ${URL}`);
             },
         },
