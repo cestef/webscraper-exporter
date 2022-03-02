@@ -24,17 +24,17 @@ declare interface Scraper {
     on(event: "testFinish", listener: (res: TestResult[keyof TestResult]) => void): this;
     on(event: "testStart", listener: (URL: string) => void): this;
     on(event: "addonFinish", listener: (addon: IAddon, result: any) => void): this;
-    on(event: "info", listener: (message: string) => void): this;
-    on(event: "warn", listener: (message: string) => void): this;
-    on(event: "error", listener: (message: string) => void): this;
-    on(event: "debug", listener: (message: string) => void): this;
+    on(event: "info", listener: (message: string[]) => void): this;
+    on(event: "warn", listener: (message: string[]) => void): this;
+    on(event: "error", listener: (message: string[]) => void): this;
+    on(event: "debug", listener: (message: string[]) => void): this;
 
     on(event: string, listener: (...args: any[]) => void): this;
 }
 class Scraper extends EventEmitter {
     browser: Browser | null;
     options: ScraperOptions;
-    interval: NodeJS.Timeout | null;
+    interval: number | null;
     results: TestResult[];
     constructor(options: ScraperOptions) {
         super();
@@ -46,16 +46,16 @@ class Scraper extends EventEmitter {
     private _emitLog(level: LogLevel, ...args: any[]) {
         switch (level) {
             case LogLevel.DEBUG:
-                this.emit("debug", args.join("\n"));
+                this.emit("debug", args);
                 break;
             case LogLevel.WARN:
-                this.emit("warn", args.join("\n"));
+                this.emit("warn", args);
                 break;
             case LogLevel.INFO:
-                this.emit("info", args.join("\n"));
+                this.emit("info", args);
                 break;
             case LogLevel.ERROR:
-                this.emit("error", args.join("\n"));
+                this.emit("error", args);
                 break;
         }
     }
@@ -125,7 +125,6 @@ class Scraper extends EventEmitter {
             LogLevel.DEBUG,
             `Running addons that need to be ran before the test... (${before.length})`
         );
-
         for (let addon of before)
             try {
                 const res = await addon.run(context, page, url);
@@ -133,13 +132,13 @@ class Scraper extends EventEmitter {
             } catch (e) {
                 this._emitLog(LogLevel.WARN, `Failed to run the "${addon.name}" addon: `, e);
             }
-
         const start = Date.now();
         const devTools = page.client();
         const cpuMeter = await getCPU(devTools, 100);
         let bytesIn = 0;
         await devTools.send("Network.enable");
         devTools.on("Network.loadingFinished", (event) => (bytesIn += event.encodedDataLength));
+        this._emitLog(LogLevel.DEBUG, `Navigating to ${url}...`);
         await page.goto(url, { waitUntil: "networkidle2" });
         await page.evaluate(() => {
             window.scrollBy(0, window.innerHeight);
@@ -147,10 +146,11 @@ class Scraper extends EventEmitter {
         const bodyWidth = await page.evaluate(() => document.body.scrollWidth);
         const bodyHeight = await page.evaluate(() => document.body.scrollHeight);
         await page.setViewport({ width: bodyWidth, height: bodyHeight });
-
         const cpuMetrics = cpuMeter();
         const memoryMetrics = await getMemory(page);
-
+        const ttfb = await page.evaluate(
+            () => window.performance.timing.responseStart - window.performance.timing.requestStart
+        );
         const end = Date.now();
         this._emitLog(LogLevel.DEBUG, `Finished performance test for ${url}`);
         const after = addons.filter((e) => e.when === "after") as IAddon<"after">[];
@@ -158,7 +158,7 @@ class Scraper extends EventEmitter {
             LogLevel.DEBUG,
             `Running addons that need to be ran after the test... (${after.length})`
         );
-        const scrapeRes = { cpuMetrics, memoryMetrics, duration: end - start, bytesIn };
+        const scrapeRes = { cpuMetrics, memoryMetrics, duration: end - start, bytesIn, ttfb };
         for (let addon of after)
             try {
                 const res = await addon.run(context, page, url, scrapeRes);
@@ -236,5 +236,6 @@ interface ScrapeResult {
     memoryMetrics: MemoryStats;
     duration: number;
     bytesIn: number;
+    ttfb: number;
 }
 export { Scraper, ScraperOptions, ScrapeResult };

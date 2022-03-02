@@ -1,5 +1,5 @@
 import { createServer } from "net";
-export default (port: number) =>
+export const portInUse = (port: number) =>
     new Promise<boolean>((res) => {
         const server = createServer((socket) => {
             socket.write("Echo server\r\n");

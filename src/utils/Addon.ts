@@ -2,7 +2,7 @@ import { nanoid } from "nanoid";
 import type { BrowserContext, Page } from "puppeteer";
 import { ScrapeResult } from "../scraper";
 
-export default class Addon {
+export class Addon {
     name: string;
     when: WhenToRun;
     run: RunFunction<WhenToRun>;

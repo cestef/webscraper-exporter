@@ -7,11 +7,11 @@ import {
     statSync,
     writeFileSync,
     copyFileSync,
-} from "fs";
+} from "fs-extra";
 import inquirer from "inquirer";
 import { join } from "path";
 import Yargs from "yargs";
-import Logger from "../../utils/Logger";
+import { Logger } from "../../utils";
 const { prompt } = inquirer;
 
 const templatesPath = join(__dirname, "../../../templates");
@@ -98,19 +98,19 @@ export const handler = async (args: any) => {
     createDirectoryContents(templatePath, name, ["wsce.properties.json", ".git"]);
     if (args.typings)
         copyFileSync(join(templatesPath, "wsce.d.ts"), join(process.cwd(), name, "wsce.d.ts"));
-    logger.log(
-        "success",
-        greenBright,
-        `Finished creating your project !
+    logger.log("success", greenBright, [
+        [
+            `Finished creating your project !
     - Use ${whiteBright(bold(`cd ${name}`))} to start hacking !
     - Edit ${whiteBright(bold(`wsce.config.js`))} to edit the configuration.${
-            args.typings
-                ? `\n   - Typings for the config have been automatically included, if you don't want them, you can pass ${whiteBright(
-                      bold("--typings=false")
-                  )}`
-                : ""
-        }`
-    );
+                args.typings
+                    ? `\n   - Typings for the config have been automatically included, if you don't want them, you can pass ${whiteBright(
+                          bold("--typings=false")
+                      )}`
+                    : ""
+            }`,
+        ],
+    ]);
 };
 
 const createDirectoryContents = (

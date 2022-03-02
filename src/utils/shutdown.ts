@@ -28,7 +28,7 @@ const shutdownListeners: any[] = [];
  * @param  {function(string)} fn Function to execute on shutdown.
  */
 const processOnce = (signals: any[], fn: any) => {
-    return signals.forEach((sig: string) => process.once(sig, fn));
+    return signals.forEach((sig: any) => process.once(sig, fn));
 };
 
 /**
@@ -40,7 +40,7 @@ const forceExitAfter = (timeout: number | undefined) => () => {
         // Force shutdown after timeout
         console.warn(`Could not close resources gracefully after ${timeout}ms: forcing shutdown`);
         return process.exit(1);
-    }, timeout).unref();
+    }, timeout);
 };
 
 /**
@@ -80,4 +80,4 @@ processOnce(SHUTDOWN_SIGNALS, forceExitAfter(SHUTDOWN_TIMEOUT));
 // Register process shutdown callback
 // Will listen to incoming signal events and execute all registered handlers in the stack
 processOnce(SHUTDOWN_SIGNALS, shutdownHandler);
-export default beforeShutdown;
+export { beforeShutdown };

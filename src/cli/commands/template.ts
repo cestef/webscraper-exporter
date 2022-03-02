@@ -1,12 +1,21 @@
 import Yargs from "yargs";
-import Logger from "../../utils/Logger";
+import { Logger } from "../../utils";
 import inquirer from "inquirer";
 import { join } from "path";
-import { readdirSync, statSync, existsSync, readFileSync } from "fs";
-import { readJSONSync, moveSync, copySync, rm } from "fs-extra";
+import {
+    readJSONSync,
+    moveSync,
+    copySync,
+    rm,
+    readdirSync,
+    statSync,
+    existsSync,
+    readFileSync,
+} from "fs-extra";
 import simpleGit from "simple-git";
 import { nanoid } from "nanoid";
 import { bold, greenBright, whiteBright } from "colorette";
+
 const git = simpleGit();
 
 const GITHUB_REGEXP =
@@ -33,9 +42,19 @@ const TEMPLATES = readdirSync(templatesPath)
             };
     });
 
+const resolvePath = (input: string): string | null => {
+    const relative = join(process.cwd(), input);
+    if (existsSync(relative)) return relative;
+    const absolute = input;
+    if (existsSync(absolute)) return absolute;
+    const dirnameRelative = join(__dirname, input);
+    if (existsSync(dirnameRelative)) return dirnameRelative;
+    return null;
+};
+
 export const command = "template <command>";
 
-export const describe = "Add or remove templates";
+export const describe = "Add, remove or list templates";
 
 export const builder = (yargs: typeof Yargs) =>
     yargs.positional("command", {
@@ -54,8 +73,9 @@ export const handler = async (args: any) => {
                 type: "input",
                 validate: async (input: string) => {
                     input = input || "";
-                    const path = join(process.cwd(), input);
-                    if (existsSync(path)) {
+                    const path = resolvePath(input);
+                    console.log("PATH", path);
+                    if (path) {
                         const stat = statSync(path);
                         const files = readdirSync(path);
                         if (
@@ -91,18 +111,18 @@ export const handler = async (args: any) => {
                     join(templatesPath, templateName.split(" ").join("-").toLowerCase()),
                     { overwrite: true }
                 );
-                logger.log(
-                    "success",
-                    greenBright,
-                    `Successfully cloned the template, you can now use it: ${whiteBright(
-                        bold(templateName)
-                    )}`
-                );
+                logger.log("success", greenBright, [
+                    [
+                        `Successfully cloned the template, you can now use it: ${whiteBright(
+                            bold(templateName)
+                        )}`,
+                    ],
+                ]);
             } else {
                 logger.info("Copying the template...");
                 const tempID = nanoid();
                 const tempPath = join(__dirname, "../../../templates", tempID);
-                copySync(join(process.cwd(), template), tempPath);
+                copySync(resolvePath(template) as string, tempPath);
                 const templateName =
                     readJSONSync(join(tempPath, "wsce.properties.json"), "utf8")?.name || tempID;
                 moveSync(
@@ -110,13 +130,13 @@ export const handler = async (args: any) => {
                     join(templatesPath, templateName.split(" ").join("-").toLowerCase()),
                     { overwrite: true }
                 );
-                logger.log(
-                    "success",
-                    greenBright,
-                    `Successfully copied the template, you can now use it: ${whiteBright(
-                        bold(templateName)
-                    )}`
-                );
+                logger.log("success", greenBright, [
+                    [
+                        `Successfully copied the template, you can now use it: ${whiteBright(
+                            bold(templateName)
+                        )}`,
+                    ],
+                ]);
             }
             break;
         }
@@ -129,13 +149,13 @@ export const handler = async (args: any) => {
             });
             for (let template of templates)
                 rm(join(templatesPath, template), { recursive: true, force: true });
-            logger.log(
-                "success",
-                greenBright,
-                `Successfully deleted ${whiteBright(bold(templates.length))} template${
-                    templates.length > 1 ? "s" : ""
-                }.`
-            );
+            logger.log("success", greenBright, [
+                [
+                    `Successfully deleted ${whiteBright(bold(templates.length))} template${
+                        templates.length > 1 ? "s" : ""
+                    }.`,
+                ],
+            ]);
 
             break;
         }

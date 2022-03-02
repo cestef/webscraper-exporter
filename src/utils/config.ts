@@ -1,24 +1,46 @@
-import { readdirSync } from "fs-extra";
-import path, { resolve, parse } from "path";
-import { join } from "path";
-const getFiles = (dir: string): string[] => {
-    const dirents = readdirSync(dir, { withFileTypes: true });
-    const files = dirents.map((dirent) => {
-        const res = resolve(dir, dirent.name);
-        return dirent.isDirectory() ? getFiles(res) : res;
-    });
-    return Array.prototype.concat(...files);
+import { accessSync, readdirSync, statSync, constants } from "fs-extra";
+import path, { resolve, parse, join } from "path";
+import { whiteBright } from "colorette";
+import { Logger } from ".";
+
+const getFiles = (dir: string, depth: number, logger: Logger): string[] => {
+    try {
+        const dirents = readdirSync(dir);
+        const files = dirents.map((dirent) => {
+            const res = resolve(dir, dirent);
+            const isDirectory = statSync(res).isDirectory();
+            try {
+                accessSync(res, constants.R_OK);
+                return depth > 0
+                    ? isDirectory
+                        ? getFiles(res, depth - 1, logger)
+                        : res
+                    : isDirectory
+                    ? null
+                    : res;
+            } catch (e: any) {
+                if (e.code !== "EPERM" && e.code !== "EACCES") {
+                    throw e;
+                }
+                return isDirectory ? [] : null;
+            }
+        });
+        return Array.prototype.concat(...files).filter((e) => e !== null);
+    } catch (e: any) {
+        logger.debug(`${whiteBright(`Couldn't search for a config file in ${dir} `)} : ${e}`);
+        return [];
+    }
 };
 
-export default (basePath: string): string[] => {
-    const files = getFiles(basePath);
+export const findConfig = (basePath: string, depth: number = 3, logger: Logger): string[] => {
+    const files = getFiles(basePath, depth, logger);
     const configsPaths = files.filter((e) =>
         /^(?:(?!default).*\.)?wsce.config.js$/.test(parse(e).base)
     );
     return configsPaths;
 };
 
-export const load = async (pathToConfig: string) => {
+export const loadConfig = async (pathToConfig: string) => {
     pathToConfig = pathToConfig.trim();
     let res: { config: any; error: any } = { config: null, error: null };
     switch (path.isAbsolute(pathToConfig)) {

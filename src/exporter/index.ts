@@ -5,27 +5,8 @@ import { Scraper } from "../index";
 import { TestResult } from "../scraper/types";
 import { EventEmitter } from "events";
 import { LogLevel } from "..";
-
-const bytesIn = new Gauge({
-    name: "bytes_in",
-    help: "Bytes In",
-    labelNames: ["url", "addons"],
-});
-const cpuUsage = new Gauge({
-    name: "cpu_usage",
-    help: "CPU Usage (%)",
-    labelNames: ["url", "addons"],
-});
-const heapUsage = new Gauge({
-    name: "heap_usage",
-    help: "Heap Usage (bytes)",
-    labelNames: ["url", "addons"],
-});
-const duration = new Gauge({
-    name: "duration",
-    help: "Duration of the Test (ms)",
-    labelNames: ["url", "addons"],
-});
+import { ScrapeResult } from "../scraper";
+import { GAUGES } from "./constants";
 
 interface Exporter {
     on(event: "info", listener: (message: string) => void): this;
@@ -38,26 +19,31 @@ class Exporter extends EventEmitter {
     server: Server | null;
     register: client.Registry;
     scraper: Scraper;
+    gauges: { getProperty: (res: ScrapeResult) => number; gauge: client.Gauge<string> }[];
     constructor(public options: ExporterOptions) {
         super();
         this.server = null;
         this.register = client.register;
         this.scraper = options.scraper;
         this.options.port = this.options.port || 9924;
+        this.gauges = GAUGES.map(({ getProperty, gauge }) => ({
+            getProperty,
+            gauge: new Gauge(gauge),
+        }));
     }
     private _emitLog(level: LogLevel, ...args: any[]) {
         switch (level) {
             case LogLevel.DEBUG:
-                this.emit("debug", args.join("\n"));
+                this.emit("debug", args);
                 break;
             case LogLevel.WARN:
-                this.emit("warn", args.join("\n"));
+                this.emit("warn", args);
                 break;
             case LogLevel.INFO:
-                this.emit("info", args.join("\n"));
+                this.emit("info", args);
                 break;
             case LogLevel.ERROR:
-                this.emit("error", args.join("\n"));
+                this.emit("error", args);
                 break;
         }
     }
@@ -77,22 +63,9 @@ class Exporter extends EventEmitter {
         for (let URL in test) {
             let t = test[URL];
             for (let { test, addons } of t.scrape) {
-                bytesIn.set(
-                    { url: URL, addons: addons.map((e) => e.name).join(",") },
-                    test.bytesIn
-                );
-                cpuUsage.set(
-                    { url: URL, addons: addons.map((e) => e.name).join(",") },
-                    test.cpuMetrics.average
-                );
-                heapUsage.set(
-                    { url: URL, addons: addons.map((e) => e.name).join(",") },
-                    test.memoryMetrics.JSHeapUsedSize
-                );
-                duration.set(
-                    { url: URL, addons: addons.map((e) => e.name).join(",") },
-                    test.duration
-                );
+                const labels = { url: URL, addons: addons.map((e) => e.name).join(",") };
+                for (let { gauge, getProperty } of this.gauges)
+                    gauge.set(labels, getProperty(test));
             }
         }
     }

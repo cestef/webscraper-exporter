@@ -1,7 +1,7 @@
 import { EventEmitter } from "events";
-import Logger from "./Logger";
+import { Logger } from ".";
 
-export default (logger: Logger, ...emitters: EventEmitter[]) => {
+export const bindLogs = (logger: Logger, ...emitters: EventEmitter[]) => {
     emitters.forEach((e) => {
         e.on("debug", (m) => logger.debug(m));
         e.on("error", (m) => logger.error(m));

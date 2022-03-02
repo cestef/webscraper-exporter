@@ -1,40 +1,34 @@
 import { join, parse } from "path";
 import Yargs from "yargs";
-import { Exporter, ExporterOptions, Scraper, ScraperOptions } from "../../index";
-import Logger from "../../utils/Logger";
-import beforeShutdown from "../../shutdown";
-import bindLogs from "../../utils/bindLogs";
+import { Exporter, ExporterOptions, Scraper, ScraperOptions } from "../..";
+import {
+    findConfig,
+    loadConfig as load,
+    beforeShutdown,
+    bindLogs,
+    portInUse,
+    Logger,
+} from "../../utils";
 import { validateConfig } from "../schema";
-import findConfig from "../../utils/config";
-import { load } from "../../utils/config";
 import { prompt } from "inquirer";
 import { bold, whiteBright } from "colorette";
 import shorten from "path-shorten";
-import portInUse from "../../utils/portInUse";
-import { readdirSync } from "fs-extra";
 
-export const command = "start [path]";
+export const command = "start";
 
 export const describe = "Start the exporter";
 
 export const builder = (yargs: typeof Yargs) =>
     yargs
-        .positional("path", {
-            describe: "Path to the project to start",
-            type: "string",
-            default: ".",
-        })
         .option("config", {
             alias: "c",
             type: "string",
-            description: "The config file path",
+            description: "Config file path",
         })
         .option("verbose", {
             alias: "v",
             type: "boolean",
             description: "Print debug logs",
-            count: true,
-            default: 0,
         })
         .option("urls", {
             alias: "u",
@@ -44,7 +38,7 @@ export const builder = (yargs: typeof Yargs) =>
         .option("port", {
             alias: "p",
             type: "number",
-            description: "Exporter port",
+            description: "Port for the exporter to listen on",
         })
         .option("interval", {
             alias: "i",
@@ -54,12 +48,20 @@ export const builder = (yargs: typeof Yargs) =>
         .option("yes", {
             alias: "y",
             type: "boolean",
-            description: "Whether to skip interactive questions and choose the default response",
-            default: false,
+            description:
+                "Whether to skip interactive questions and choose the default response or not",
+        })
+        .option("nocolor", {
+            type: "boolean",
+            description: "Whether to print debug logs with colors or not",
+        })
+        .option("depth", {
+            type: "number",
+            description: "Number of subdirs to be searched in for the config",
         });
 
 export const handler = async (args: any) => {
-    const logger = new Logger(true, args.v + 2);
+    const logger = new Logger(true, args.v ? 3 : 2, args.nocolor);
     let config: { scraper: ScraperOptions; exporter: ExporterOptions } | null = null;
     let path: string = "";
 
@@ -76,10 +78,12 @@ export const handler = async (args: any) => {
         if (!loaded.config) {
             await loadDefault();
             logger.debug(loaded.error);
-        } else config = loaded.config;
-        path = args.config;
+        } else {
+            config = loaded.config;
+            path = args.config;
+        }
     } else {
-        let configPaths = findConfig(process.cwd());
+        let configPaths = findConfig(process.cwd(), args.depth, logger);
         switch (configPaths.length) {
             case 0: {
                 logger.warn("No config found in the cwd.");
@@ -89,7 +93,10 @@ export const handler = async (args: any) => {
             case 1: {
                 const loaded = await load(configPaths[0]);
                 if (!loaded.config) await loadDefault();
-                else config = loaded.config;
+                else {
+                    config = loaded.config;
+                    path = configPaths[0];
+                }
                 break;
             }
             default: {
@@ -100,7 +107,10 @@ export const handler = async (args: any) => {
                     choices: configPaths.map((e) => {
                         const parsed = parse(e);
                         return {
-                            name: join(shorten(parsed.dir), whiteBright(bold(parsed.base))),
+                            name: join(
+                                shorten(parsed.dir, { length: 4 }),
+                                whiteBright(bold(parsed.base))
+                            ),
                             value: e,
                         };
                     }),
@@ -108,8 +118,10 @@ export const handler = async (args: any) => {
                 });
                 path = selected || configPaths[0];
                 const loaded = await load(path);
-                if (!loaded.config) await loadDefault();
-                else config = loaded.config;
+                if (!loaded.config) {
+                    logger.debug(loaded.error);
+                    await loadDefault();
+                } else config = loaded.config;
                 break;
             }
         }
