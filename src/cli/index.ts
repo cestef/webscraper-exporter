@@ -16,6 +16,5 @@ yargs(hideBin(process.argv))
     .alias("h", "help")
     .epilog(bold(__dirname))
     .detectLocale(false)
-    .showHelpOnFail(false)
     .commandDir(join(__dirname, "./commands"))
     .demandCommand().argv;

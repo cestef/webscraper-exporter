@@ -4,6 +4,8 @@ Most of the configuration part happens in the config file. (`wsce.config.js` by 
 
 Here is the default configuration file: 
 ```js
+// wsce.config.js
+
 module.exports = {
     scraper: {
         urls: [],
