@@ -2,13 +2,25 @@
 
 A simple yet powerful [`prometheus`](https://prometheus.io) exporter for website performance metrics built using [`puppeteer`](https://pptr.dev/).
 
+## Table of contents 
+
+- [CLI](#cli)
+    - [Getting started](#getting-started)
+        - [Installation](#installation-of-the-cli)
+        - [Configuration](#configuration)
+        - [Using](#using-the-cli)
+- [NodeJS Module](#nodejs-module)
+    - [Installation](#installation-of-the-module)
+    - [Using](#using-the-module)
+- [Docker](#docker)
+
 ## CLI 
 
 Currently only tested on `macOS` and `Linux`, should support `Windows`
 
 ### Getting started
 
-#### Installation
+#### Installation of the CLI
 
 You can install the cli included to get started quickly with barely no configuration:
 
@@ -48,8 +60,11 @@ module.exports = {
 
 For further information on the configuration, see [CONFIGURING.md](./docs/CONFIGURING.md)
 
-#### Using
+#### Using the CLI
 
+To see all available options for a command, see `wsce <command> -h`;
+
+##### Starting
 You can start the exporter by simply executing:
 
 ```
@@ -62,23 +77,48 @@ If you want more detailled logs, you can pass the `-v` argument.
 
 To pass a custom config file, use `-c path/to/file`
 
-To see all available options for a command, see `wsce <command> -h`;
+##### Creating a project
 
-### NodeJS module
+Create a project from one of the included templates by running:
 
-#### Installing
+```
+wsce init my-project 
+```
 
-```bash
+You will then be prompted for the project template. You can also directly pass the template to `wsce init`, e.g. : 
+
+```
+wsce init my-project --template javascript
+```
+
+By default, `wsce` includes a typings file for the config so it's easier to fill. If you don't want that, you can pass `--typings=false` to the `init` command.
+
+##### Adding, Removing and Listing Templates
+
+`wsce template` has 3 subcommands:
+
+- `add`: Add a template from a local directory / remote repository
+- `remove`: Remove a saved template
+- `list`: List all saved templates
+
+For more information on templates, see [TEMPLATES.md](./docs/TEMPLATES.md)
+
+## NodeJS module
+
+#### Installation of the module
+
+```
 npm install --save webscraper-exporter 
 ```
 
 or 
 
-```bash
+```
 yarn add webscraper-exporter
 ```
 
-#### Using
+#### Using the module
+
 ```js
 import { Exporter, Scraper } from "webscraper-exporter";
 
@@ -102,4 +142,11 @@ const exporter = new Exporter({
 });
 exporter.start();
 ```
+
 For more examples, see the `examples` folder.
+
+## Docker
+
+There is a [`Dockerfile`](./Dockerfile) included in this repository so you can build your own image for `wsce` (based on the `node:alpine-16` image).
+
+See [DOCKER.md](./docs/DOCKER.md) for more information.
