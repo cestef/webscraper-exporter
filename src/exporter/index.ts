@@ -86,10 +86,10 @@ class Exporter extends EventEmitter {
         }
     }
     stop() {
-        this._emitLog(LogLevel.DEBUG, "Stopping exporter...");
+        this._emitLog(LogLevel.DEBUG, "Stopping the exporter");
         this.server?.close();
         this.server = null;
-        this.scraper.removeAllListeners();
+        client.register.clear();
     }
 }
 export { Exporter };

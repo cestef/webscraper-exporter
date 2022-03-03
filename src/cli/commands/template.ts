@@ -100,7 +100,7 @@ export const handler = async (args: any) => {
             });
             const githubURL = getGithubURL(template);
             if (githubURL) {
-                logger.info("Cloning the template...");
+                logger.info("Cloning the template");
                 const tempID = nanoid();
                 const tempPath = join(__dirname, "../../../templates", tempID);
                 await git.clone(githubURL.url, tempPath);
@@ -119,7 +119,7 @@ export const handler = async (args: any) => {
                     ],
                 ]);
             } else {
-                logger.info("Copying the template...");
+                logger.info("Copying the template");
                 const tempID = nanoid();
                 const tempPath = join(__dirname, "../../../templates", tempID);
                 copySync(resolvePath(template) as string, tempPath);
@@ -153,7 +153,7 @@ export const handler = async (args: any) => {
                 [
                     `Successfully deleted ${whiteBright(bold(templates.length))} template${
                         templates.length > 1 ? "s" : ""
-                    }.`,
+                    }`,
                 ],
             ]);
 

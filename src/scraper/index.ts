@@ -1,3 +1,4 @@
+import { blueBright, redBright, yellow } from "colorette";
 import { EventEmitter } from "events";
 import ms from "ms";
 import puppeteer, {
@@ -36,8 +37,10 @@ class Scraper extends EventEmitter {
     options: ScraperOptions;
     interval: number | null;
     results: TestResult[];
+    running: boolean;
     constructor(options: ScraperOptions) {
         super();
+        this.running = false;
         this.browser = null;
         this.options = { ...defaultOptions, ...options };
         this.interval = null;
@@ -73,47 +76,54 @@ class Scraper extends EventEmitter {
             this.emit("browserDisconnected", this.browser);
             if (this.browser?.process() != null) this.browser?.process()?.kill("SIGINT");
             this.initBrowser();
-            this._emitLog(LogLevel.WARN, "Browser got disconnected, resurrected puppeteer");
+            this._emitLog(LogLevel.WARN, "Browser got disconnected, resurrecting puppeteer");
         });
         this.emit("browserReady", this.browser);
         return this;
     }
     private async scrape() {
+        this.running = true;
         if (!this.browser) await this.initBrowser();
         const tests: TestResult = {};
         this.emit("testsStart");
         if (this.options.urls.length === 0)
-            this._emitLog(LogLevel.WARN, "You didn't provide any url for testing.");
+            this._emitLog(LogLevel.WARN, "You didn't provide any url for testing");
         const testsStart = Date.now();
         for (let URL of this.options.urls) {
-            this._emitLog(LogLevel.DEBUG, `Starting testing for ${URL}`);
+            this._emitLog(LogLevel.DEBUG, `Starting testing for ${blueBright(URL)}`);
             this.emit("testStart", URL);
             try {
                 const { result } = await this.test(URL);
                 tests[URL] = { scrape: result };
             } catch (e) {
-                this._emitLog(LogLevel.ERROR, `Test run failed for ${URL}: `, e);
+                this._emitLog(LogLevel.ERROR, `Test run failed for ${redBright(URL)}: `, e);
             }
             this.emit("testFinish", tests[URL]);
         }
         const testsEnd = Date.now();
         this._emitLog(
             LogLevel.INFO,
-            `Finished testing for each URL after ${ms(testsEnd - testsStart)}, next tests in ${ms(
-                this.options.interval as number,
-                {
+            `Finished testing for each URL after ${blueBright(
+                ms(testsEnd - testsStart)
+            )}, next tests are in ${blueBright(
+                ms(this.options.interval as number, {
                     long: true,
-                }
-            )} (${new Date(Date.now() + (this.options.interval as number)).toLocaleTimeString()})`
+                })
+            )} (${blueBright(
+                new Date(Date.now() + (this.options.interval as number)).toLocaleTimeString()
+            )})`
         );
         if (testsEnd - testsStart > (this.options.interval as number) && this.results.length === 0)
             this._emitLog(
                 LogLevel.WARN,
-                `The testing took longer than ${ms(this.options.interval as number, {
-                    long: true,
-                })}, consider augmenting the interval.`
+                `The testing took longer than ${yellow(
+                    ms(this.options.interval as number, {
+                        long: true,
+                    })
+                )}, consider augmenting the interval`
             );
         this.emit("testsFinish", tests);
+        this.running = false;
         return this;
     }
     private async testPage(context: BrowserContext, url: string, addons: IAddon[]) {
@@ -123,14 +133,18 @@ class Scraper extends EventEmitter {
         const before = addons.filter((e) => e.when === "before" || !e.when) as IAddon<"before">[];
         this._emitLog(
             LogLevel.DEBUG,
-            `Running addons that need to be ran before the test... (${before.length})`
+            `Running addons that need to be ran before the test (${blueBright(before.length)})`
         );
         for (let addon of before)
             try {
                 const res = await addon.run(context, page, url);
                 this.emit("addonFinish", addon, res);
             } catch (e) {
-                this._emitLog(LogLevel.WARN, `Failed to run the "${addon.name}" addon: `, e);
+                this._emitLog(
+                    LogLevel.WARN,
+                    `Failed to run the ${redBright(addon.name)} addon: `,
+                    e
+                );
             }
         const start = Date.now();
         const devTools = page.client();
@@ -138,7 +152,7 @@ class Scraper extends EventEmitter {
         let bytesIn = 0;
         await devTools.send("Network.enable");
         devTools.on("Network.loadingFinished", (event) => (bytesIn += event.encodedDataLength));
-        this._emitLog(LogLevel.DEBUG, `Navigating to ${url}...`);
+        this._emitLog(LogLevel.DEBUG, `Navigating to ${blueBright(url)}`);
         await page.goto(url, { waitUntil: "networkidle2" });
         await page.evaluate(() => {
             window.scrollBy(0, window.innerHeight);
@@ -152,11 +166,11 @@ class Scraper extends EventEmitter {
             () => window.performance.timing.responseStart - window.performance.timing.requestStart
         );
         const end = Date.now();
-        this._emitLog(LogLevel.DEBUG, `Finished performance test for ${url}`);
+        this._emitLog(LogLevel.DEBUG, `Finished performance test for ${blueBright(url)}`);
         const after = addons.filter((e) => e.when === "after") as IAddon<"after">[];
         this._emitLog(
             LogLevel.DEBUG,
-            `Running addons that need to be ran after the test... (${after.length})`
+            `Running addons that need to be ran after the test (${blueBright(after.length)})`
         );
         const scrapeRes = { cpuMetrics, memoryMetrics, duration: end - start, bytesIn, ttfb };
         for (let addon of after)
@@ -164,7 +178,11 @@ class Scraper extends EventEmitter {
                 const res = await addon.run(context, page, url, scrapeRes);
                 this.emit("addonFinish", addon, res);
             } catch (e) {
-                this._emitLog(LogLevel.WARN, `Failed to run the "${addon.name}" addon: `, e);
+                this._emitLog(
+                    LogLevel.WARN,
+                    `Failed to run the ${redBright(addon.name)} addon: `,
+                    e
+                );
             }
 
         await page.close();
@@ -214,8 +232,19 @@ class Scraper extends EventEmitter {
         return { result: res };
     }
     async stop() {
-        this._emitLog(LogLevel.DEBUG, "Stopping scraper...");
+        if (this.running) {
+            this._emitLog(
+                LogLevel.WARN,
+                "There are still tests running, waiting for them to finish before shutting down"
+            );
+            await new Promise<void>((r) => {
+                this.once("testsFinish", () => r());
+            });
+        }
+        this._emitLog(LogLevel.DEBUG, "Killing puppeteer and stopping the scraper");
+        this.removeAllListeners();
         await this.browser?.close();
+        this.browser = null;
         this.interval && clearInterval(this.interval);
         return this;
     }

@@ -26,7 +26,7 @@ module.exports = {
                 },
             },
         ],
-        puppeteerOptions: { headless: false },
+        puppeteerOptions: { headless: true },
     },
     exporter: {
         port: 3001,

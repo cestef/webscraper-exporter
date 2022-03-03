@@ -1,4 +1,4 @@
-import { bold, whiteBright, greenBright } from "colorette";
+import { bold, whiteBright, greenBright, blueBright } from "colorette";
 import {
     existsSync,
     mkdirSync,
@@ -55,7 +55,7 @@ export const handler = async (args: any) => {
             "Project name may only include letters, numbers, underscores and hashes."
         );
     if (args.template && !existsSync(join(__dirname, "../../../templates", args.template)))
-        return logger.error(`The "${args.template}" does not exist !`);
+        return logger.error(`The ${blueBright(args.template)} template does not exist !`);
     const QUESTIONS = [
         {
             name: "template",
@@ -90,7 +90,9 @@ export const handler = async (args: any) => {
 
     if (existsSync(projectPath)) {
         return logger.error(
-            `A folder named "${name}" already exists, please remove it before creating a new project`
+            `A folder named ${blueBright(
+                name
+            )} already exists, please remove it before creating a new project`
         );
     }
 
