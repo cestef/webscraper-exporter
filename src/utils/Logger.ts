@@ -30,7 +30,7 @@ export class Logger {
                       }`
                     : ""
             }`,
-            ...args?.slice(1).map((e) => "\n" + e)
+            ...args?.slice(1)
         );
     }
     debug(...args: any[]) {

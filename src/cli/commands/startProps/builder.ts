@@ -40,4 +40,9 @@ export const builder = (yargs: typeof Yargs) =>
         .option("depth", {
             type: "number",
             description: "Number of subdirs to be searched in for the config",
+        })
+        .option("disable-keybindings", {
+            type: "boolean",
+            alias: ["dsk"],
+            description: "Whether to disable the console's keybindings or not",
         });

@@ -33,7 +33,7 @@ export const handler = async (args: any) => {
     bindLogs(logger, scraper, exporter);
     const bfS = async (code: any) => {
         rl.cursorTo(process.stdout, 0);
-        rl.clearLine(process.stdout, 10);
+        rl.clearLine(process.stdout, 0);
         exporter.stop();
         await scraper.stop();
         process.exit(code);
@@ -50,30 +50,32 @@ export const handler = async (args: any) => {
     }
     await scraper.start();
     exporter.start();
-    handleStdin({
-        0x03: 0x71,
-        0x71: () => bfS(1),
-        0x68: 0x3f,
-        0x3f: () =>
-            console.log(
-                `${underline(bold("Keybindings"))}\nPress ${blueBright(
-                    "R"
-                )} to restart \nPress ${blueBright("Q")} or ${blueBright(
-                    "Ctrl-C"
-                )} to exit\nPress ${blueBright("C")} to clear the console`
-            ),
-        0x72: async () => {
-            ac.abort();
-            process.stdin.removeAllListeners();
-            process.removeAllListeners();
-            delete require.cache[path];
-            logger.log("DEBUG", dim, [`Reloading ${blueBright(parse(path).base)}`]);
-            exporter.stop();
-            await scraper.stop();
-            handler({ ...args, config: path });
-        },
-        0x63: () => console.clear(),
-    });
+    if (!args.dsk) {
+        handleStdin({
+            0x03: 0x71,
+            0x71: () => bfS(1),
+            0x68: 0x3f,
+            0x3f: () =>
+                console.log(
+                    `${underline(bold("Keybindings"))}\nPress ${blueBright(
+                        "R"
+                    )} to restart \nPress ${blueBright("Q")} or ${blueBright(
+                        "Ctrl-C"
+                    )} to exit\nPress ${blueBright("C")} to clear the console`
+                ),
+            0x72: async () => {
+                ac.abort();
+                process.stdin.removeAllListeners();
+                process.removeAllListeners();
+                delete require.cache[path];
+                logger.log("DEBUG", dim, [`Reloading ${blueBright(parse(path).base)}`]);
+                exporter.stop();
+                await scraper.stop();
+                handler({ ...args, config: path });
+            },
+            0x63: () => console.clear(),
+        });
+    }
 
     beforeShutdown(bfS);
     watchForConfigChange(configWatcher, logger);

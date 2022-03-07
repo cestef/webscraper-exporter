@@ -142,7 +142,7 @@ class Scraper extends EventEmitter {
             } catch (e) {
                 this._emitLog(
                     LogLevel.WARN,
-                    `Failed to run the ${redBright(addon.name)} addon: `,
+                    `Failed to run the ${redBright(addon.name)} addon:`,
                     e
                 );
             }
