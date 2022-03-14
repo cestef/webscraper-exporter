@@ -4,15 +4,20 @@ A simple yet powerful [`prometheus`](https://prometheus.io) exporter for website
 
 ## Table of contents 
 
-- [CLI](#cli)
+- [Webscraper Exporter](#webscraper-exporter)
+  - [Table of contents](#table-of-contents)
+  - [CLI](#cli)
     - [Getting started](#getting-started)
-        - [Installation](#installation-of-the-cli)
-        - [Configuration](#configuration)
-        - [Using](#using-the-cli)
-- [NodeJS Module](#nodejs-module)
-    - [Installation](#installation-of-the-module)
-    - [Using](#using-the-module)
-- [Docker](#docker)
+      - [Installation of the CLI](#installation-of-the-cli)
+      - [Configuration](#configuration)
+      - [Using the CLI](#using-the-cli)
+        - [Starting](#starting)
+        - [Creating a project](#creating-a-project)
+        - [Adding, Removing and Listing Templates](#adding-removing-and-listing-templates)
+  - [NodeJS module](#nodejs-module)
+      - [Installation of the module](#installation-of-the-module)
+      - [Using the module](#using-the-module)
+  - [Docker](#docker)
 
 ## CLI 
 
@@ -21,6 +26,8 @@ Currently only tested on `macOS` and `Linux`, should support `Windows`
 ### Getting started
 
 #### Installation of the CLI
+
+<img src="./docs/media/wsce-install.gif" style="height:50%; width:50%;margin-bottom:20px;margin-top:20px">
 
 You can install the cli included to get started quickly with barely no configuration:
 
