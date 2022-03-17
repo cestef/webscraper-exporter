@@ -8,6 +8,7 @@ import { validateConfig } from "../../schema";
 import { prompt } from "inquirer";
 import rl from "readline";
 import { fullyLoadConfig, watchForConfigChange, handleStdin } from "./functions";
+import { AbortController } from "node-abort-controller";
 
 export const handler = async (args: any) => {
     const logger = new Logger(true, args.v ? 3 : 2, args.nocolor);
