@@ -9,7 +9,7 @@ If you want to install a template from a remote repository (e.g. Github), it's a
 wsce template add
 ```
 
-TODO: Add an example GIF of `wsce template add`
+![Wsce Template Add](media/wsce-template-add.gif)
 
 ### Local templates
 
