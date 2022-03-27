@@ -7,7 +7,7 @@ export const builder = (yargs: typeof Yargs) =>
             description: "Config file path",
         })
         .option("verbose", {
-            alias: "v",
+            alias: ["v", "debug"],
             type: "boolean",
             description: "Print debug logs",
         })
@@ -32,14 +32,15 @@ export const builder = (yargs: typeof Yargs) =>
             description:
                 "Whether to skip interactive questions and choose the default response or not",
         })
+        .option("depth", {
+            alias: "d",
+            type: "number",
+            description: "Number of subdirs to be searched in for the config",
+        })
         .option("nocolor", {
             alias: ["nc", "nocolors"],
             type: "boolean",
             description: "Whether to print debug logs with colors or not",
-        })
-        .option("depth", {
-            type: "number",
-            description: "Number of subdirs to be searched in for the config",
         })
         .option("disable-keybindings", {
             type: "boolean",

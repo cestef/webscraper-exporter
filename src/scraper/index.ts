@@ -1,4 +1,4 @@
-import { blueBright, redBright, yellow } from "colorette";
+import { blueBright, dim, gray, redBright, yellow } from "colorette";
 import { EventEmitter } from "events";
 import ms from "ms";
 import puppeteer, {
@@ -63,6 +63,7 @@ class Scraper extends EventEmitter {
         }
     }
     async start() {
+        this._emitLog(LogLevel.DEBUG, "Starting the scraper");
         await this.initBrowser();
         this.scrape();
         this.interval = setInterval(this.scrape.bind(this), this.options.interval);
@@ -70,7 +71,10 @@ class Scraper extends EventEmitter {
     }
     private async initBrowser() {
         this.browser?.removeAllListeners();
-        this.browser = await puppeteer.launch(this.options.puppeteerOptions);
+        this.browser = await puppeteer.launch({
+            ...this.options.puppeteerOptions,
+            defaultViewport: { width: 1920, height: 1080 },
+        });
         // Automatically reconnect puppeteer to chromium by killing the old instance and creating a new one
         this.browser.on("disconnected", () => {
             this.emit("browserDisconnected", this.browser);
@@ -90,7 +94,7 @@ class Scraper extends EventEmitter {
             this._emitLog(LogLevel.WARN, "You didn't provide any url for testing");
         const testsStart = Date.now();
         for (let URL of this.options.urls) {
-            this._emitLog(LogLevel.DEBUG, `Starting testing for ${blueBright(URL)}`);
+            this._emitLog(LogLevel.DEBUG, `Starting testing for ${dim(URL)}`);
             this.emit("testStart", URL);
             try {
                 const { result } = await this.test(URL);
@@ -133,7 +137,7 @@ class Scraper extends EventEmitter {
         const before = addons.filter((e) => e.when === "before" || !e.when) as IAddon<"before">[];
         this._emitLog(
             LogLevel.DEBUG,
-            `Running addons that need to be ran before the test (${blueBright(before.length)})`
+            `Running addons that need to be ran before the test (${dim(before.length)})`
         );
         for (let addon of before)
             try {
@@ -152,7 +156,7 @@ class Scraper extends EventEmitter {
         let bytesIn = 0;
         await devTools.send("Network.enable");
         devTools.on("Network.loadingFinished", (event) => (bytesIn += event.encodedDataLength));
-        this._emitLog(LogLevel.DEBUG, `Navigating to ${blueBright(url)}`);
+        this._emitLog(LogLevel.DEBUG, `Navigating to ${dim(url)}`);
         await page.goto(url, { waitUntil: "networkidle2" });
         await page.evaluate(() => {
             window.scrollBy(0, window.innerHeight);
@@ -166,11 +170,11 @@ class Scraper extends EventEmitter {
             () => window.performance.timing.responseStart - window.performance.timing.requestStart
         );
         const end = Date.now();
-        this._emitLog(LogLevel.DEBUG, `Finished performance test for ${blueBright(url)}`);
+        this._emitLog(LogLevel.DEBUG, `Finished performance test for ${dim(url)}`);
         const after = addons.filter((e) => e.when === "after") as IAddon<"after">[];
         this._emitLog(
             LogLevel.DEBUG,
-            `Running addons that need to be ran after the test (${blueBright(after.length)})`
+            `Running addons that need to be ran after the test (${dim(after.length)})`
         );
         const scrapeRes = { cpuMetrics, memoryMetrics, duration: end - start, bytesIn, ttfb };
         for (let addon of after)

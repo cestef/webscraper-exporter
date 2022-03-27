@@ -7,6 +7,7 @@ import { EventEmitter } from "events";
 import { LogLevel } from "..";
 import { ScrapeResult } from "../scraper";
 import { GAUGES } from "./constants";
+import { blueBright } from "colorette";
 
 interface Exporter {
     on(event: "info", listener: (message: string) => void): this;
@@ -52,9 +53,9 @@ class Exporter extends EventEmitter {
         this.server.listen(this.options.port);
         this._emitLog(
             LogLevel.INFO,
-            `Exporter listening on http://localhost${
-                this.options.port === 80 ? "" : `:${this.options.port}`
-            }/metrics`
+            `Exporter listening on ${blueBright(
+                `http://localhost${this.options.port === 80 ? "" : `:${this.options.port}`}/metrics`
+            )}`
         );
         this.server.on("request", this._get.bind(this));
         this.scraper.on("testsFinish", this._handleTestsFinish.bind(this));
