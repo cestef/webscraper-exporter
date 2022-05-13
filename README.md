@@ -1,4 +1,7 @@
 # Webscraper Exporter
+<p align="center">
+  <img src="https://user-images.githubusercontent.com/53212129/168236403-3a8cc17f-3f1f-4d94-86b9-44bbe1b41a44.png" style="height:70%; width:70%;margin-bottom:20px;margin-top:20px;">
+</p>
 
 A simple yet powerful [`prometheus`](https://prometheus.io) exporter for website performance metrics built using [`puppeteer`](https://pptr.dev/).
 
