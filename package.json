@@ -23,7 +23,7 @@
         "path-shorten": "^0.1.2",
         "prom-client": "^14.0.1",
         "puppeteer-core": "^14.1.0",
-        "simple-git": "^2.48.0",
+        "simple-git": "^3.5.0",
         "update-notifier": "^5.1.0",
         "yargs": "^17.3.1"
     },
