@@ -1,6 +1,6 @@
 {
     "name": "webscraper-exporter",
-    "version": "1.2.2",
+    "version": "1.2.3",
     "license": "MIT",
     "bin": {
         "wsce": "./dist/cli/index.js"
