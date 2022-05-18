@@ -1,4 +1,4 @@
-import { CDPSession, Protocol } from "puppeteer";
+import { CDPSession, Protocol } from "puppeteer-core";
 
 interface CPUUsageSnapshot {
     timestamp: number;

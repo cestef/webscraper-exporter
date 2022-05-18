@@ -1,4 +1,4 @@
-import { Metrics, Page } from "puppeteer";
+import { Metrics, Page } from "puppeteer-core";
 
 export interface MemoryStats {
     JSHeapUsedSize: number;

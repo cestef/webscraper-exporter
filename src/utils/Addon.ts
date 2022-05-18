@@ -1,5 +1,5 @@
 import { nanoid } from "nanoid";
-import type { BrowserContext, Page } from "puppeteer";
+import type { BrowserContext, Page } from "puppeteer-core";
 import { ScrapeResult } from "../scraper";
 
 export class Addon {

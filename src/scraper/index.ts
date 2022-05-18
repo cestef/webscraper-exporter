@@ -7,12 +7,15 @@ import puppeteer, {
     BrowserContext,
     BrowserLaunchArgumentOptions,
     LaunchOptions,
-} from "puppeteer";
+} from "puppeteer-core";
 import { IAddon, LogLevel } from "..";
 import { TestResult } from "./types";
 import { CPUStats, getCPU } from "./utils/cpuUsage";
 import { getCombinations } from "./utils/functions";
 import { getMemory, MemoryStats } from "./utils/memoryUage";
+import downloadChromium from "download-chromium";
+import path from "path";
+import { hasChromiumInPath } from "../utils/findChromium";
 
 const defaultOptions: Partial<ScraperOptions> = {
     interval: 60_000,
@@ -38,9 +41,11 @@ class Scraper extends EventEmitter {
     interval: number | null;
     results: TestResult[];
     running: boolean;
+    stopped: number;
     constructor(options: ScraperOptions) {
         super();
         this.running = false;
+        this.stopped = 0;
         this.browser = null;
         this.options = { ...defaultOptions, ...options };
         this.interval = null;
@@ -71,9 +76,22 @@ class Scraper extends EventEmitter {
     }
     private async initBrowser() {
         this.browser?.removeAllListeners();
+        let chromiumPath = await hasChromiumInPath();
+        if (!chromiumPath) {
+            this._emitLog(LogLevel.INFO, "Chromium not found in path, downloading it...");
+            chromiumPath = (await downloadChromium({
+                revision: "991974",
+                installPath: "/var/tmp/.local-chromium",
+            })) as string;
+            this._emitLog(LogLevel.INFO, "Chromium downloaded");
+        } else this._emitLog(LogLevel.DEBUG, "Chromium found in path");
+
         this.browser = await puppeteer.launch({
             ...this.options.puppeteerOptions,
             defaultViewport: { width: 1920, height: 1080 },
+            ...(this.options.puppeteerOptions?.executablePath && chromiumPath
+                ? null
+                : { executablePath: chromiumPath }),
         });
         // Automatically reconnect puppeteer to chromium by killing the old instance and creating a new one
         this.browser.on("disconnected", () => {
@@ -131,7 +149,11 @@ class Scraper extends EventEmitter {
         return this;
     }
     private async testPage(context: BrowserContext, url: string, addons: IAddon[]) {
+        this._emitLog(LogLevel.DEBUG, "Creating new page");
+
         const page = await context.newPage();
+        this._emitLog(LogLevel.DEBUG, "Created new page");
+
         await page.setCacheEnabled(false);
         page.setDefaultNavigationTimeout(60000);
         const before = addons.filter((e) => e.when === "before" || !e.when) as IAddon<"before">[];
@@ -236,7 +258,9 @@ class Scraper extends EventEmitter {
         return { result: res };
     }
     async stop() {
-        if (this.running) {
+        if (this.running && this.stopped < 1) {
+            this.stopped++;
+            setTimeout(() => this.stopped--, 2000);
             this._emitLog(
                 LogLevel.WARN,
                 "There are still tests running, waiting for them to finish before shutting down"

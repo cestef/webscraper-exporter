@@ -6,7 +6,7 @@ const conditions = {
 
 module.exports = {
     scraper: {
-        urls: ["http://localhost:3000"],
+        urls: ["https://google.com"],
         interval: 60_000,
         addons: [
             // {
@@ -17,14 +17,14 @@ module.exports = {
             //         await page.emulateNetworkConditions(conditions);
             //     },
             // },
-            {
-                name: "CPU Throttling",
-                when: "before",
-                twice: false,
-                run: async (_, page, __) => {
-                    await page.emulateCPUThrottling(1);
-                },
-            },
+            // {
+            //     name: "CPU Throttling",
+            //     when: "before",
+            //     twice: false,
+            //     run: async (_, page, __) => {
+            //         await page.emulateCPUThrottling(1);
+            //     },
+            // },
         ],
         puppeteerOptions: { headless: true },
     },
