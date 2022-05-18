@@ -8,3 +8,4 @@ dist/
 !templates/**/*
 test/
 release/
+yarn-error.log
