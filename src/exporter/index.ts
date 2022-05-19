@@ -8,6 +8,8 @@ import { LogLevel } from "..";
 import { ScrapeResult } from "../scraper";
 import { GAUGES } from "./constants";
 import { blueBright } from "colorette";
+import { readFileSync } from "fs-extra";
+import { join } from "path";
 
 interface Exporter {
     on(event: "info", listener: (message: string) => void): this;
@@ -81,7 +83,7 @@ class Exporter extends EventEmitter {
             case "/": {
                 res.setHeader("Content-Type", "text/html");
                 res.end(
-                    'webscraper-exporter, made by cstef: <a href="https://github.com/cstefFlexin/webscraper-exporter">Github</a><br><a href="/metrics">Metrics</a>'
+                    readFileSync(join(__dirname, "../../public/index.html"), { encoding: "utf8" })
                 );
             }
         }

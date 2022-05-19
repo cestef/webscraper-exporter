@@ -1,11 +1,11 @@
+!templates/**/*
 node_modules/
 wsce.config.js
 test.ts
 data/
 dist/
-.DS_Store
 .swc/
-!templates/**/*
 test/
 release/
 yarn-error.log
+**/.DS_Store

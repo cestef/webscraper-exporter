@@ -39,9 +39,9 @@
     "keywords": [
         "prometheus",
         "scraper",
-        "prometheus-exporter",
+        "exporter",
         "puppeteer",
-        "metrics-exporter"
+        "metrics"
     ],
     "repository": {
         "type": "git",
@@ -55,7 +55,8 @@
         "scripts": "dist/**/*.js",
         "assets": [
             "templates/**/*",
-            "config/**/*"
+            "config/**/*",
+            "public/**/*"
         ]
     }
 }
