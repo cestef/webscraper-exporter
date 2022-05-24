@@ -50,5 +50,5 @@ module.exports = {...}
 ```
 So the user can use the auto-included typings to fill in the config.
 
-You can then organize the folder however you like it. `wsce` uses CommonJS, this means you have use `module.exports`,  `require()`, etc.
+You can then organize the folder however you like it. `wsce` uses CommonJS, this means you can use `module.exports`,  `require()`, etc.
 
