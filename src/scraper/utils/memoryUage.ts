@@ -14,7 +14,7 @@ export interface MemoryStats {
 }
 
 export const getMemory = async (page: Page): Promise<MemoryStats> => {
-    const client = page.client();
+    const client = page.client?.();
     await client.send(`HeapProfiler.enable`);
     await client.send(`HeapProfiler.collectGarbage`);
     const metrics = await page.metrics();

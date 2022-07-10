@@ -178,7 +178,7 @@ class Scraper extends EventEmitter {
                 );
             }
         const start = Date.now();
-        const devTools = page.client();
+        const devTools = page.client?.();
         const cpuMeter = await getCPU(devTools, 100);
         let bytesIn = 0;
         await devTools.send("Network.enable");
@@ -218,7 +218,6 @@ class Scraper extends EventEmitter {
         // Cleanup after the test
         devTools.removeAllListeners();
         await devTools.send("Network.disable");
-        await devTools.detach();
         await page.close();
 
         return scrapeRes;
