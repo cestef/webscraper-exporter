@@ -30,7 +30,7 @@ const Login = {
             }
             return true;
         } catch (e) {
-            logger.debug("An Error occured when logging in to " + url, e);
+            throw new Error("An Error occured when logging in to " + url, e);
         }
     },
 };
