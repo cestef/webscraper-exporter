@@ -13,8 +13,7 @@ export interface MemoryStats {
     RecalcStyleDuration: number;
 }
 
-export const getMemory = async (page: Page): Promise<MemoryStats> => {
-    const client = page.client();
+export const getMemory = async (page: Page, client: CDPSession): Promise<MemoryStats> => {
     await client.send(`HeapProfiler.enable`);
     await client.send(`HeapProfiler.collectGarbage`);
     const metrics = await page.metrics();

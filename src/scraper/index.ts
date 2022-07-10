@@ -191,7 +191,7 @@ class Scraper extends EventEmitter {
         const bodyHeight = await page.evaluate(() => document.body.scrollHeight);
         await page.setViewport({ width: bodyWidth, height: bodyHeight });
         const cpuMetrics = cpuMeter();
-        const memoryMetrics = await getMemory(page);
+        const memoryMetrics = await getMemory(page, devTools);
         const ttfb = await page.evaluate(
             () => window.performance.timing.responseStart - window.performance.timing.requestStart
         );
