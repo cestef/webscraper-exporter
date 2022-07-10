@@ -46,4 +46,9 @@ export const builder = (yargs: typeof Yargs) =>
             type: "boolean",
             alias: ["dsk"],
             description: "Whether to disable the console's keybindings or not",
+        })
+        .option("watch-memory-leaks", {
+            type: "boolean",
+            alias: ["watchML"],
+            description: "Whether to watch for memory leaks or not",
         });

@@ -69,7 +69,6 @@ class Scraper extends EventEmitter {
     }
     async start() {
         this._emitLog(LogLevel.DEBUG, "Starting the scraper");
-        await this.initBrowser();
         this.scrape();
         this.interval = setInterval(this.scrape.bind(this), this.options.interval);
         return this;
@@ -178,7 +177,7 @@ class Scraper extends EventEmitter {
                 );
             }
         const start = Date.now();
-        const devTools = page.client?.();
+        const devTools = await page.target().createCDPSession();
         const cpuMeter = await getCPU(devTools, 100);
         let bytesIn = 0;
         await devTools.send("Network.enable");
@@ -218,8 +217,8 @@ class Scraper extends EventEmitter {
         // Cleanup after the test
         devTools.removeAllListeners();
         await devTools.send("Network.disable");
+        devTools.detach();
         await page.close();
-
         return scrapeRes;
     }
     private async test(URL: string) {

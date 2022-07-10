@@ -5,6 +5,7 @@ import { fullyLoadConfig, handleStdin, watchForConfigChange } from "./functions"
 import { AbortController } from "node-abort-controller";
 import { Exporter } from "../../../exporter";
 import { Scraper } from "../../../scraper";
+import memwatch from "@airbnb/node-memwatch";
 import { parse } from "path";
 import { prompt } from "inquirer";
 import rl from "readline";
@@ -27,6 +28,19 @@ export const handler = async (args: any) => {
         ...(urls && urls?.length > 0 && { urls }),
         ...(typeof args.interval !== "undefined" && { port: args.interval }),
     });
+    if (args.watchML) {
+        logger.info(`Watching for memory leaks...`);
+        let hd: memwatch.HeapDiff | null = null;
+        scraper.on("testsStart", () => {
+            hd = new memwatch.HeapDiff();
+        });
+        scraper.on("testsFinish", () => {
+            const diff = hd?.end();
+            if (diff) logger.info(`Memory difference: ${diff.change.size}`);
+            else logger.warn("No differences detected");
+        });
+    }
+
     let exporter = new Exporter({
         ...config.exporter,
         scraper,
