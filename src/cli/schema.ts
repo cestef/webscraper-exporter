@@ -17,6 +17,7 @@ const configSchema = Joi.object({
             )
             .required(),
         interval: Joi.number().integer().default(60_000).optional(),
+        forceRecreateBrowser: Joi.boolean().default(false).optional(),
     }).required(),
     exporter: Joi.object({ port: Joi.number().integer().min(0).max(65535).optional() }).required(),
 });
