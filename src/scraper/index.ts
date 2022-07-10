@@ -75,7 +75,7 @@ class Scraper extends EventEmitter {
         return this;
     }
     private async initBrowser() {
-        if (this.options.forceRecreateBrowser) {
+        if (this.browser && this.options.forceRecreateBrowser) {
             this._emitLog(LogLevel.DEBUG, "Forcing browser recreation");
             await this.browser?.close();
             this.browser = null;
