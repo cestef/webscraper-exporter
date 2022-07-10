@@ -18,6 +18,7 @@ export const getMemory = async (page: Page): Promise<MemoryStats> => {
     await client.send(`HeapProfiler.enable`);
     await client.send(`HeapProfiler.collectGarbage`);
     const metrics = await page.metrics();
+    await client.send(`HeapProfiler.disable`);
     const measures = (
         [
             `JSHeapUsedSize`,

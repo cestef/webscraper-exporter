@@ -61,6 +61,7 @@ class Exporter extends EventEmitter {
         );
         this.server.on("request", this._get.bind(this));
         this.scraper.on("testsFinish", this._handleTestsFinish.bind(this));
+        return this;
     }
     private async _handleTestsFinish(test: TestResult) {
         for (let URL in test) {

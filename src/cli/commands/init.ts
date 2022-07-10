@@ -1,4 +1,4 @@
-import { bold, whiteBright, greenBright, blueBright } from "colorette";
+import { bold, whiteBright, greenBright, blueBright, red } from "colorette";
 import {
     existsSync,
     mkdirSync,
@@ -15,25 +15,6 @@ import { Logger } from "../../utils";
 const { prompt } = inquirer;
 
 const templatesPath = join(__dirname, "../../../templates");
-const TEMPLATES = readdirSync(templatesPath)
-    .filter((e) => statSync(join(templatesPath, e)).isDirectory())
-    .map((e) => {
-        const templatePath = join(__dirname, "../../../templates", e);
-        if (existsSync(join(templatePath, "wsce.properties.json")))
-            return {
-                name: JSON.parse(readFileSync(join(templatePath, "wsce.properties.json"), "utf8"))
-                    ?.name,
-                path: e,
-            };
-        else
-            return {
-                path: e,
-                name: e
-                    .split(" ")
-                    .map((w) => w[0].toUpperCase() + w.substring(1).toLowerCase())
-                    .join(" "),
-            };
-    });
 
 export const command = "init [name]";
 
@@ -50,11 +31,35 @@ export const builder = (yargs: typeof Yargs) =>
 
 export const handler = async (args: any) => {
     const logger = new Logger(false, 3);
+
+    if (!existsSync(templatesPath))
+        return logger.error(`Template path ${red(templatesPath)} not found`);
+
+    const TEMPLATES = readdirSync(templatesPath)
+        .filter((e) => statSync(join(templatesPath, e)).isDirectory())
+        .map((e) => {
+            const templatePath = join(templatesPath, e);
+            if (existsSync(join(templatePath, "wsce.properties.json")))
+                return {
+                    name: JSON.parse(
+                        readFileSync(join(templatePath, "wsce.properties.json"), "utf8")
+                    )?.name,
+                    path: e,
+                };
+            else
+                return {
+                    path: e,
+                    name: e
+                        .split(" ")
+                        .map((w) => w[0].toUpperCase() + w.substring(1).toLowerCase())
+                        .join(" "),
+                };
+        });
     if (args.name && !/^([A-Za-z\-\_\d])+$/.test(args.name))
         return logger.error(
             "Project name may only include letters, numbers, underscores and hashes."
         );
-    if (args.template && !existsSync(join(__dirname, "../../../templates", args.template)))
+    if (args.template && !existsSync(join(templatesPath, args.template)))
         return logger.error(`The ${blueBright(args.template)} template does not exist !`);
     const QUESTIONS = [
         {
@@ -77,7 +82,7 @@ export const handler = async (args: any) => {
     ];
     const answers = await prompt<any>(QUESTIONS);
     const template = answers.template || args.template;
-    let templatePath = join(__dirname, "../../../templates", template);
+    let templatePath = join(templatesPath, template);
 
     if (!existsSync(templatePath))
         return logger.error(

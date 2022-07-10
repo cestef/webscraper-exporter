@@ -12,7 +12,7 @@
         "skipLibCheck": true,
         "outDir": "./dist",
         "rootDir": "./src",
-        "declaration": true
+        "declaration": false
     },
-    "include": ["src", "mac.wsce.config copy.js"]
+    "include": ["src"]
 }

@@ -9,3 +9,4 @@ test/
 release/
 yarn-error.log
 **/.DS_Store
+bundle/

@@ -10,6 +10,7 @@ export const portInUse = (port: number) =>
             res(true);
         });
         server.on("listening", () => {
+            server.removeAllListeners();
             server.close();
             res(false);
         });

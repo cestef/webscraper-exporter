@@ -54,6 +54,7 @@ export const getCPU = async (cdp: CDPSession, interval: number): Promise<() => C
     }, interval);
 
     return () => {
+        cdp.send("Performance.disable");
         clearInterval(timer);
         return {
             average: cumulativeActiveTime / (lastTimestamp - startTime),

@@ -5,3 +5,4 @@ examples/
 Dockerfile
 .dockerignore
 tsconfig.json
+.prettierrc

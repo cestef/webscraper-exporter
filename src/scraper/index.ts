@@ -1,6 +1,7 @@
-import { blueBright, dim, gray, redBright, yellow } from "colorette";
-import { EventEmitter } from "events";
-import ms from "ms";
+import { CPUStats, getCPU } from "./utils/cpuUsage";
+import { IAddon, LogLevel } from "..";
+import { MemoryStats, getMemory } from "./utils/memoryUage";
+import { blueBright, dim, redBright, yellow } from "colorette";
 import puppeteer, {
     Browser,
     BrowserConnectOptions,
@@ -8,14 +9,13 @@ import puppeteer, {
     BrowserLaunchArgumentOptions,
     LaunchOptions,
 } from "puppeteer-core";
-import { IAddon, LogLevel } from "..";
+
+import { EventEmitter } from "events";
 import { TestResult } from "./types";
-import { CPUStats, getCPU } from "./utils/cpuUsage";
-import { getCombinations } from "./utils/functions";
-import { getMemory, MemoryStats } from "./utils/memoryUage";
 import downloadChromium from "download-chromium";
-import path from "path";
+import { getCombinations } from "./utils/functions";
 import { hasChromiumInPath } from "../utils/findChromium";
+import ms from "ms";
 
 const defaultOptions: Partial<ScraperOptions> = {
     interval: 60_000,
@@ -75,6 +75,11 @@ class Scraper extends EventEmitter {
         return this;
     }
     private async initBrowser() {
+        if (this.options.forceRecreateBrowser) {
+            this._emitLog(LogLevel.DEBUG, "Forcing browser recreation");
+            await this.browser?.close();
+            this.browser = null;
+        }
         this.browser?.removeAllListeners();
         let chromiumPath = await hasChromiumInPath();
         if (!chromiumPath) {
@@ -83,8 +88,8 @@ class Scraper extends EventEmitter {
                 revision: "991974",
                 installPath: "/var/tmp/.local-chromium",
             })) as string;
-            this._emitLog(LogLevel.INFO, "Chromium downloaded");
-        } else this._emitLog(LogLevel.DEBUG, "Chromium found in path");
+            this._emitLog(LogLevel.DEBUG, `Chromium downloaded to ${dim(chromiumPath)}`);
+        } else this._emitLog(LogLevel.DEBUG, `Chromium found in path at ${dim(chromiumPath)}`);
 
         this.browser = await puppeteer.launch({
             ...this.options.puppeteerOptions,
@@ -93,19 +98,19 @@ class Scraper extends EventEmitter {
                 ? null
                 : { executablePath: chromiumPath }),
         });
-        // Automatically reconnect puppeteer to chromium by killing the old instance and creating a new one
-        this.browser.on("disconnected", () => {
-            this.emit("browserDisconnected", this.browser);
-            if (this.browser?.process() != null) this.browser?.process()?.kill("SIGINT");
-            this.initBrowser();
-            this._emitLog(LogLevel.WARN, "Browser got disconnected, resurrecting puppeteer");
-        });
+        // // Automatically reconnect puppeteer to chromium by killing the old instance and creating a new one
+        // this.browser.on("disconnected", () => {
+        //     this.emit("browserDisconnected", this.browser);
+        //     if (this.browser?.process() != null) this.browser?.process()?.kill("SIGINT");
+        //     this.initBrowser();
+        //     this._emitLog(LogLevel.WARN, "Browser got disconnected, resurrecting puppeteer");
+        // });
         this.emit("browserReady", this.browser);
         return this;
     }
     private async scrape() {
         this.running = true;
-        if (!this.browser) await this.initBrowser();
+        await this.initBrowser();
         const tests: TestResult = {};
         this.emit("testsStart");
         if (this.options.urls.length === 0)
@@ -210,7 +215,10 @@ class Scraper extends EventEmitter {
                     e
                 );
             }
-
+        // Cleanup after the test
+        devTools.removeAllListeners();
+        await devTools.send("Network.disable");
+        await devTools.detach();
         await page.close();
 
         return scrapeRes;
@@ -287,6 +295,7 @@ interface ScraperOptions {
      * @default 60000
      */
     interval?: number;
+    forceRecreateBrowser?: boolean;
 }
 interface ScrapeResult {
     cpuMetrics: CPUStats;

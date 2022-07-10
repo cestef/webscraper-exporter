@@ -1,14 +1,15 @@
+import { Logger, beforeShutdown, bindLogs, portInUse, unbindLogs } from "../../../utils";
 import { blueBright, bold, dim, underline } from "colorette";
-import { watch } from "fs/promises";
-import { parse } from "path";
+import { fullyLoadConfig, handleStdin, watchForConfigChange } from "./functions";
+
+import { AbortController } from "node-abort-controller";
 import { Exporter } from "../../../exporter";
 import { Scraper } from "../../../scraper";
-import { Logger, bindLogs, portInUse, beforeShutdown } from "../../../utils";
-import { validateConfig } from "../../schema";
+import { parse } from "path";
 import { prompt } from "inquirer";
 import rl from "readline";
-import { fullyLoadConfig, watchForConfigChange, handleStdin } from "./functions";
-import { AbortController } from "node-abort-controller";
+import { validateConfig } from "../../schema";
+import { watch } from "fs/promises";
 
 export const handler = async (args: any) => {
     const logger = new Logger(true, args.v ? 3 : 2, args.nocolor);
@@ -37,6 +38,7 @@ export const handler = async (args: any) => {
         rl.clearLine(process.stdout, 0);
         exporter.stop();
         await scraper.stop();
+        unbindLogs(scraper, exporter);
         process.exit(code);
     };
     while (await portInUse(exporter.options.port)) {
@@ -72,6 +74,7 @@ export const handler = async (args: any) => {
                 logger.log("DEBUG", dim, [`Reloading ${blueBright(parse(path).base)}`]);
                 exporter.stop();
                 await scraper.stop();
+                unbindLogs(scraper, exporter);
                 handler({ ...args, config: path });
             },
             0x63: () => console.clear(),

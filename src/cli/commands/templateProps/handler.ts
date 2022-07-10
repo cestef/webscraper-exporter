@@ -12,7 +12,7 @@ import {
     readFileSync,
 } from "fs-extra";
 import { nanoid } from "nanoid";
-import { bold, greenBright, whiteBright } from "colorette";
+import { bold, greenBright, red, whiteBright } from "colorette";
 
 const GITHUB_REGEXP =
     /^(?:(?:https:\/\/github.com\/([a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}\/[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38})(?:\.git)?)|([a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}\/[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}))$/i;
@@ -22,27 +22,30 @@ import simpleGit from "simple-git";
 const git = simpleGit();
 
 const templatesPath = join(__dirname, "../../../../templates");
-const TEMPLATES = readdirSync(templatesPath)
-    .filter((e) => statSync(join(templatesPath, e)).isDirectory())
-    .map((e) => {
-        const templatePath = join(templatesPath, e);
-        if (existsSync(join(templatePath, "wsce.properties.json")))
-            return {
-                name: JSON.parse(readFileSync(join(templatePath, "wsce.properties.json"), "utf8"))
-                    ?.name,
-                path: e,
-            };
-        else
-            return {
-                path: e,
-                name: e
-                    .split(" ")
-                    .map((w) => w[0].toUpperCase() + w.substring(1).toLowerCase())
-                    .join(" "),
-            };
-    });
 export const handler = async (args: any) => {
     const logger = new Logger(false, 3);
+    if (!existsSync(templatesPath))
+        return logger.error(`Templates path ${red(templatesPath)} not found`);
+    const TEMPLATES = readdirSync(templatesPath)
+        .filter((e) => statSync(join(templatesPath, e)).isDirectory())
+        .map((e) => {
+            const templatePath = join(templatesPath, e);
+            if (existsSync(join(templatePath, "wsce.properties.json")))
+                return {
+                    name: JSON.parse(
+                        readFileSync(join(templatePath, "wsce.properties.json"), "utf8")
+                    )?.name,
+                    path: e,
+                };
+            else
+                return {
+                    path: e,
+                    name: e
+                        .split(" ")
+                        .map((w) => w[0].toUpperCase() + w.substring(1).toLowerCase())
+                        .join(" "),
+                };
+        });
     switch (args.command) {
         case "add": {
             let { template } = await inquirer.prompt({

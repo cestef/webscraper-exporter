@@ -9,3 +9,8 @@ export const bindLogs = (logger: Logger, ...emitters: EventEmitter[]) => {
         e.on("warn", (m) => logger.warn(m));
     });
 };
+export const unbindLogs = (...emitters: EventEmitter[]) => {
+    emitters.forEach((e) => {
+        e.removeAllListeners();
+    });
+};
