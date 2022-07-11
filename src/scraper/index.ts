@@ -74,12 +74,12 @@ class Scraper extends EventEmitter {
         return this;
     }
     private async initBrowser() {
+        this.browser?.removeAllListeners();
         if (this.browser && this.options.forceRecreateBrowser) {
             this._emitLog(LogLevel.DEBUG, "Forcing browser recreation");
             await this.browser?.close();
             this.browser = null;
         }
-        this.browser?.removeAllListeners();
         let chromiumPath = await hasChromiumInPath();
         if (!chromiumPath) {
             this._emitLog(LogLevel.INFO, "Chromium not found in path, downloading it...");
@@ -97,13 +97,13 @@ class Scraper extends EventEmitter {
                 ? null
                 : { executablePath: chromiumPath }),
         });
-        // // Automatically reconnect puppeteer to chromium by killing the old instance and creating a new one
-        // this.browser.on("disconnected", () => {
-        //     this.emit("browserDisconnected", this.browser);
-        //     if (this.browser?.process() != null) this.browser?.process()?.kill("SIGINT");
-        //     this.initBrowser();
-        //     this._emitLog(LogLevel.WARN, "Browser got disconnected, resurrecting puppeteer");
-        // });
+        // Automatically reconnect puppeteer to chromium by killing the old instance and creating a new one
+        this.browser.on("disconnected", async () => {
+            this.emit("browserDisconnected", this.browser);
+            if (this.browser?.process?.() != null) this.browser?.process?.()?.kill?.("SIGINT");
+            this._emitLog(LogLevel.WARN, "Browser got disconnected, resurrecting puppeteer");
+            await this.initBrowser();
+        });
         this.emit("browserReady", this.browser);
         return this;
     }
