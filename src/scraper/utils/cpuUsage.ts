@@ -6,8 +6,10 @@ interface CPUUsageSnapshot {
 }
 
 export interface CPUStats {
-    average: number;
+    // average: number;
     snapshots: CPUUsageSnapshot[];
+    activeTime: number;
+    duration: number;
 }
 
 const processMetrics = (
@@ -57,7 +59,9 @@ export const getCPU = async (cdp: CDPSession, interval: number): Promise<() => C
         cdp.send("Performance.disable");
         clearInterval(timer);
         return {
-            average: cumulativeActiveTime / (lastTimestamp - startTime),
+            // average: cumulativeActiveTime / (lastTimestamp - startTime),
+            activeTime: cumulativeActiveTime,
+            duration: lastTimestamp - startTime,
             snapshots,
         };
     };

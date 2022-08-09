@@ -1,45 +1,61 @@
 import { ScrapeResult } from "../scraper";
 
 const labelNames = ["url", "addons"];
-export const GAUGES = [
+interface IGauge {
+    gauge: {
+        name: string;
+        help: string;
+        labelNames: string[];
+    };
+    getProperty: (res: ScrapeResult) => any;
+}
+export const GAUGES: IGauge[] = [
     {
         gauge: {
-            name: "time_to_first_byte",
-            help: "Time to first byte (TTFB)",
+            name: "webscraper_time_to_first_byte_seconds",
+            help: "Time to first byte (TTFB) in seconds",
             labelNames,
         },
-        getProperty: (res: ScrapeResult) => res.ttfb,
+        getProperty: (res) => res.ttfb / 1000,
     },
     {
         gauge: {
-            name: "duration",
-            help: "Duration of the test (ms)",
+            name: "webscraper_test_duration_seconds",
+            help: "Duration of the test in seconds",
             labelNames,
         },
-        getProperty: (res: ScrapeResult) => res.duration,
+        getProperty: (res) => res.duration / 1000,
     },
     {
         gauge: {
-            name: "heap_usage",
-            help: "JS Heap used size (bytes)",
+            name: "webscraper_heap_usage_bytes",
+            help: "JS Heap used size in bytes",
             labelNames,
         },
-        getProperty: (res: ScrapeResult) => res.memoryMetrics.JSHeapUsedSize,
+        getProperty: (res) => res.memoryMetrics.JSHeapUsedSize,
     },
     {
         gauge: {
-            name: "cpu_usage",
-            help: "Average CPU usage (%)",
+            name: "webscraper_cpu_usage_seconds",
+            help: "Cumulative Active CPU usage (seconds)",
             labelNames,
         },
-        getProperty: (res: ScrapeResult) => res.cpuMetrics.average,
+        getProperty: (res) => res.cpuMetrics.activeTime / 1000,
     },
     {
         gauge: {
-            name: "bytes_in",
+            name: "webscraper_cpu_test_duration_seconds",
+            help: "Duration of the test for the CPU in seconds",
+            labelNames,
+        },
+        getProperty: (res) => res.cpuMetrics.duration / 1000,
+    },
+    {
+        gauge: {
+            name: "webscraper_in_bytes",
             help: "Bytes in",
             labelNames,
         },
-        getProperty: (res: ScrapeResult) => res.bytesIn,
+        getProperty: (res) => res.bytesIn,
     },
 ];
