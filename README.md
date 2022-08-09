@@ -21,6 +21,7 @@ A simple yet powerful [`prometheus`](https://prometheus.io) exporter for website
       - [Installation of the module](#installation-of-the-module)
       - [Using the module](#using-the-module)
   - [Docker](#docker)
+  - [Exported Data](#exported-data)
 
 ## CLI 
 
@@ -68,7 +69,7 @@ module.exports = {
 };
 ```
 
-For further information on the configuration, see [CONFIGURING.md](./docs/CONFIGURING.md)
+For further information on the configuration, see [CONFIGURING.md](docs/CONFIGURING.md)
 
 #### Using the CLI
 
@@ -111,7 +112,7 @@ By default, `wsce` includes a typings file for the config so it's easier to fill
 - `remove`: Remove a saved template
 - `list`: List all saved templates
 
-For more information on templates, see [TEMPLATES.md](./docs/TEMPLATES.md)
+For more information on templates, see [TEMPLATES.md](docs/TEMPLATES.md)
 
 ## NodeJS module
 
@@ -157,6 +158,10 @@ For more examples, see the `examples` folder.
 
 ## Docker
 
-There is a [`Dockerfile`](./Dockerfile) included in this repository so you can build your own image for `wsce` (based on the `node:alpine-16` image).
+There is a [`Dockerfile`](Dockerfile) included in this repository so you can build your own image for `wsce` (based on the `node:alpine-16` image).
 
-See [DOCKER.md](./docs/DOCKER.md) for more information.
+See [DOCKER.md](docs/DOCKER.md) for more information.
+
+## Exported Data
+
+You can see the metrics that are exposed in: [`EXPORTED_DATA.md`](docs/EXPORTED_DATA.md)
