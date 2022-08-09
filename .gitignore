@@ -1,7 +1,7 @@
 !templates/**/*
 node_modules/
 wsce.config.js
-test.ts
+test*.ts
 data/
 dist/
 .swc/
