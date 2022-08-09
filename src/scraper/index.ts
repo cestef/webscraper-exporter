@@ -11,6 +11,7 @@ import puppeteer, {
 } from "puppeteer-core";
 
 import { EventEmitter } from "events";
+import Queue from "p-queue";
 import { TestResult } from "./types";
 import downloadChromium from "download-chromium";
 import { getCombinations } from "./utils/functions";
@@ -38,7 +39,8 @@ declare interface Scraper {
 class Scraper extends EventEmitter {
     browser: Browser | null;
     options: ScraperOptions;
-    interval: number | null;
+    interval: number | null = null;
+    queue: Queue<any>;
     results: TestResult[];
     running: boolean;
     stopped: number;
@@ -48,7 +50,7 @@ class Scraper extends EventEmitter {
         this.stopped = 0;
         this.browser = null;
         this.options = { ...defaultOptions, ...options };
-        this.interval = null;
+        this.queue = new Queue({ concurrency: 1 });
         this.results = [];
     }
     private _emitLog(level: LogLevel, ...args: any[]) {
@@ -69,8 +71,22 @@ class Scraper extends EventEmitter {
     }
     async start() {
         this._emitLog(LogLevel.DEBUG, "Starting the scraper");
-        this.scrape();
-        this.interval = setInterval(this.scrape.bind(this), this.options.interval);
+        this.queue
+            .add(async () => {
+                await this.scrape();
+            })
+            .catch((e) => {
+                this._emitLog(LogLevel.ERROR, "Error in the scraper queue", e);
+            })
+            .finally(() => {
+                this.interval = setInterval(
+                    () =>
+                        this.queue.add(async () => {
+                            await this.scrape();
+                        }),
+                    this.options.interval
+                );
+            });
         return this;
     }
     private async initBrowser() {
@@ -132,11 +148,13 @@ class Scraper extends EventEmitter {
             `Finished testing for each URL after ${blueBright(
                 ms(testsEnd - testsStart)
             )}, next tests are in ${blueBright(
-                ms(this.options.interval as number, {
+                ms((this.options.interval as number) - (testsEnd - testsStart), {
                     long: true,
                 })
             )} (${blueBright(
-                new Date(Date.now() + (this.options.interval as number)).toLocaleTimeString()
+                new Date(
+                    Date.now() + ((this.options.interval as number) - (testsEnd - testsStart))
+                ).toLocaleTimeString()
             )})`
         );
         if (testsEnd - testsStart > (this.options.interval as number) && this.results.length === 0)
