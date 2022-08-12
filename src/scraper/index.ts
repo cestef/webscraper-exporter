@@ -20,6 +20,8 @@ import ms from "ms";
 
 const defaultOptions: Partial<ScraperOptions> = {
     interval: 60_000,
+    concurrentTests: 1,
+    queueThreshold: 10,
 };
 declare interface Scraper {
     on(event: "browserReady", listener: (browser: Browser) => void): this;
@@ -50,7 +52,9 @@ class Scraper extends EventEmitter {
         this.stopped = 0;
         this.browser = null;
         this.options = { ...defaultOptions, ...options };
-        this.queue = new Queue({ concurrency: 1 });
+        this.queue = new Queue({
+            concurrency: this.options.forceRecreateBrowser ? 1 : options.concurrentTests,
+        });
         this.results = [];
     }
     private _emitLog(level: LogLevel, ...args: any[]) {
@@ -69,8 +73,22 @@ class Scraper extends EventEmitter {
                 break;
         }
     }
+    private bindListeners() {
+        this.queue.on("add", (...args) => {
+            if (this.queue.size >= (this.options.queueThreshold as number)) {
+                this._emitLog(
+                    LogLevel.ERROR,
+                    `The tests queue exceeded ${redBright(
+                        this.options.queueThreshold as number
+                    )} jobs, exitting.`
+                );
+                process.exit(1);
+            }
+        });
+    }
     async start() {
         this._emitLog(LogLevel.DEBUG, "Starting the scraper");
+        this.bindListeners();
         this.queue
             .add(async () => {
                 await this.scrape();
@@ -303,7 +321,13 @@ class Scraper extends EventEmitter {
 }
 
 interface ScraperOptions {
+    /**
+     * Array of URLs to test
+     */
     urls: string[];
+    /**
+     * Custom options passer to the `puppeteer.launch()` function
+     */
     puppeteerOptions?: LaunchOptions & BrowserLaunchArgumentOptions & BrowserConnectOptions;
     addons: IAddon[];
     /**
@@ -311,7 +335,21 @@ interface ScraperOptions {
      * @default 60000
      */
     interval?: number;
+    /**
+     * Force the browser recreation for each test
+     */
     forceRecreateBrowser?: boolean;
+    /**
+     * Maximum tests to be ran at the same time
+     * WARNING: If `forceRecreateBrowser` is set to true, this will automatically be set to 1
+     * @default 1
+     */
+    concurrentTests?: number;
+    /**
+     * Maximum tests queue size, the program will exit when the queue exceeds this size
+     * @default 10
+     */
+    queueThreshold?: number;
 }
 interface ScrapeResult {
     cpuMetrics: CPUStats;
