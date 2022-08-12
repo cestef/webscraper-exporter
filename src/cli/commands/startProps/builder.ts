@@ -49,6 +49,6 @@ export const builder = (yargs: typeof Yargs) =>
         })
         .option("watch-memory-leaks", {
             type: "boolean",
-            alias: ["watchML"],
+            alias: ["watch-ml"],
             description: "Whether to watch for memory leaks or not",
         });
