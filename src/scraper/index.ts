@@ -74,7 +74,7 @@ class Scraper extends EventEmitter {
         }
     }
     private bindListeners() {
-        this.queue.on("add", (...args) => {
+        this.queue.on("add", () => {
             if (this.queue.size >= (this.options.queueThreshold as number)) {
                 this._emitLog(
                     LogLevel.ERROR,
@@ -116,13 +116,13 @@ class Scraper extends EventEmitter {
         }
         let chromiumPath = await hasChromiumInPath();
         if (!chromiumPath) {
-            this._emitLog(LogLevel.INFO, "Chromium not found in path, downloading it...");
+            this._emitLog(LogLevel.INFO, "Downloading Chromium");
             chromiumPath = (await downloadChromium({
                 revision: "991974",
                 installPath: "/var/tmp/.local-chromium",
             })) as string;
             this._emitLog(LogLevel.DEBUG, `Chromium downloaded to ${dim(chromiumPath)}`);
-        } else this._emitLog(LogLevel.DEBUG, `Chromium found in path at ${dim(chromiumPath)}`);
+        } else this._emitLog(LogLevel.DEBUG, `Chromium found at ${dim(chromiumPath)}`);
 
         this.browser = await puppeteer.launch({
             ...this.options.puppeteerOptions,
