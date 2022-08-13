@@ -22,6 +22,8 @@ A simple yet powerful [`prometheus`](https://prometheus.io) exporter for website
       - [Using the module](#using-the-module)
   - [Docker](#docker)
   - [Exported Data](#exported-data)
+  - [Customization](#customization)
+  - [Contributing](#contributing)
 
 ## CLI 
 
@@ -164,4 +166,14 @@ See [DOCKER.md](docs/DOCKER.md) for more information.
 
 ## Exported Data
 
-You can see the metrics that are exposed in: [`EXPORTED_DATA.md`](docs/EXPORTED_DATA.md)
+You can see the metrics that are exposed in: [EXPORTED_DATA.md](docs/EXPORTED_DATA.md)
+
+## Customization
+
+You can easily write your own plugins in Javascript to expand `webscraper-exporter`'s functionalities. 
+
+See [ADDONS.md](docs/ADDONS.md) for more information.
+
+## Contributing
+
+Pull requests are always welcome if you feel like fixing / expanding something in this project !
