@@ -1,4 +1,4 @@
-import { IAddon } from "./utils";
+import { IAddon, Logger, bindLogs } from "./utils";
 export { Exporter, ExporterOptions } from "./exporter";
 export { Scraper, ScraperOptions } from "./scraper";
 export { IAddon };
