@@ -2,7 +2,7 @@ FROM node:16-alpine
 
 WORKDIR /usr/src
 COPY package.json ./
-COPY yarn.lock ./
+#COPY yarn.lock ./
 COPY src src
 COPY templates templates
 COPY config/docker.wsce.config.js config/wsce.config.js
@@ -11,7 +11,7 @@ COPY tsconfig.json ./
 
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 
-RUN apk add chromium --no-cache
+RUN apk add chromium build-base python3 --no-cache
 RUN yarn
 RUN yarn build
 RUN npm link

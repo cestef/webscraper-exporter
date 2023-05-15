@@ -28,7 +28,8 @@
         "puppeteer-core": "^14.1.0",
         "simple-git": "^3.5.0",
         "update-notifier": "^5.1.0",
-        "yargs": "^17.3.1"
+        "yargs": "^17.3.1",
+        "yarn": "^1.22.19"
     },
     "devDependencies": {
         "@types/airbnb__node-memwatch": "^2.0.0",

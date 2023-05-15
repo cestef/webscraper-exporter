@@ -53,7 +53,8 @@ class Scraper extends EventEmitter {
         this.browser = null;
         this.options = { ...defaultOptions, ...options };
         this.queue = new Queue({
-            concurrency: this.options.forceRecreateBrowser ? 1 : options.concurrentTests,
+//            concurrency: this.options.forceRecreateBrowser ? 1 : options.concurrentTests,
+	  concurrency: 1
         });
         this.results = [];
     }
